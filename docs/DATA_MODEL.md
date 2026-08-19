@@ -13,7 +13,8 @@ update it if a migration ends up shaped differently than what's written here.
 - **staff_profiles** — user_id, trn (7-digit Teacher Reference Number, nullable for non-teaching
   staff), role_title, hire_date.
 - **guardians** — user_id, relationship_to_student.
-- **students** — school_id, admission_no, first_name, last_name, dob, gender, school_class_id,
+- **students** — school_id, user_id (nullable — the learner's own login account, if the school
+  issues one), admission_no, first_name, last_name, dob, gender, school_class_id,
   curriculum_level (nursery/primary/lower-secondary/upper-secondary).
 - **student_guardian** — student_id, guardian_id (pivot; this is the access-control boundary
   described in `COMPLIANCE.md`).

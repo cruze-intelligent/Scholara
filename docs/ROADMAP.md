@@ -4,11 +4,13 @@
 
 - [x] Read and distill the plan into `docs/`.
 - [x] Git repo initialized, remote set to `cruze-intelligent/Scholara`.
-- [ ] Local PHP/Composer/MySQL dev environment (Laragon).
-- [ ] Laravel project created, `spatie/laravel-permission` installed, roles seeded.
-- [ ] Core migrations for every module in `docs/ARCHITECTURE.md`'s module map.
-- [ ] One minimal Blade screen per role so every role can log in and see *something* real.
-- [ ] Stub services for NIRA, OTP/2FA, SchoolPay (interfaces + fake implementations).
+- [x] Local PHP/Composer/MySQL dev environment (Laragon), with OPcache enabled — see
+      [docs/PERFORMANCE.md](./PERFORMANCE.md).
+- [x] Laravel project created, `spatie/laravel-permission` installed, roles seeded.
+- [x] Core migrations for every module in `docs/ARCHITECTURE.md`'s module map (28 tables).
+- [x] One minimal Blade screen per role so every role can log in and see *something* real —
+      verified end-to-end for all 8 roles against seeded demo data.
+- [x] Stub services for NIRA, OTP/2FA, SchoolPay (interfaces + fake implementations).
 - [ ] First push to GitHub.
 
 ## Phase 1 — Deepen the core (Learner/Parent/Teacher loop)
