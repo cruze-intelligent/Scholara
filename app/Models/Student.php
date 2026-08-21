@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToSchool;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -10,6 +12,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Student extends Model
 {
+    use BelongsToSchool, HasFactory;
+
     protected $fillable = [
         'school_id', 'user_id', 'school_class_id', 'admission_no', 'first_name',
         'last_name', 'dob', 'gender', 'curriculum_level',

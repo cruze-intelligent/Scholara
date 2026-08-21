@@ -29,6 +29,18 @@
                     <p class="text-gray-500">No lesson plans scheduled.</p>
                 @endforelse
             </div>
+
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+                <h3 class="font-semibold text-gray-800 mb-4">Support Strategy alerts</h3>
+                @forelse ($supportAlerts as $alert)
+                    <div class="border-b border-gray-100 py-2 last:border-0 flex justify-between text-sm">
+                        <span>{{ $alert['student']->full_name }} &mdash; {{ $alert['subject']->name }}</span>
+                        <span class="text-yellow-700">predicted {{ $alert['predicted'] }} (baseline {{ $alert['baseline'] }})</span>
+                    </div>
+                @empty
+                    <p class="text-gray-500">No students currently flagged.</p>
+                @endforelse
+            </div>
         </div>
     </div>
 </x-app-layout>

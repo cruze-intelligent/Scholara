@@ -45,4 +45,6 @@ See [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) for pushing this to the
 - [docs/STAGING.md](./docs/STAGING.md) — free public preview deploy (Render) for testing before the subdomain exists
 - [docs/PERFORMANCE.md](./docs/PERFORMANCE.md) — keeping PHP/MySQL from slowing down the machine
 - [docs/ROADMAP.md](./docs/ROADMAP.md) — build phases and current status
+- [docs/DECISIONS.md](./docs/DECISIONS.md) — product defaults adopted where the plan didn't
+  specify a formula (grading weights, PAYE/NSSF rates, Five Rights, etc.)
 - [CHANGELOG.md](./CHANGELOG.md) — running log of what's been built

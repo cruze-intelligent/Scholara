@@ -39,27 +39,30 @@ license, NGO grant) all imply eventually hosting more than one institution.
 
 | Module | Core tables | Status |
 |---|---|---|
-| Auth & roles | `users`, `roles`, `permissions`, `schools` | scaffolded |
+| Auth & roles | `users`, `roles`, `permissions`, `schools` | built |
 | Student/guardian records | `students`, `guardians`, `student_guardian`, `school_classes` | scaffolded |
-| Academics (AoI/MOT/EOT) | `subjects`, `assessments`, `assessment_scores` | scaffolded |
-| Noticeboard | `notices` | scaffolded |
-| Issue reporting (RTRR/VAC) | `incident_reports` | scaffolded |
+| Academics (AoI/MOT/EOT) | `subjects`, `assessments`, `assessment_scores`, `teacher_subject_assignments` | built |
+| Noticeboard | `notices` | built |
+| Issue reporting (RTRR/VAC) | `incident_reports` | built |
 | Learning resources | `resources` | scaffolded |
-| Attendance | `attendance_records` | scaffolded |
+| Attendance | `attendance_records` | built (incl. gender-based stats) |
 | Lesson planning | `lesson_plans` | scaffolded |
-| Nursery daily logs | `daily_activity_logs`, `milestone_checklists`, `wow_moments` | scaffolded |
-| Health/EHR/eMAR | `health_records`, `medication_administrations`, `clinic_visits` | scaffolded |
-| HR/Payroll | `staff_profiles`, `payroll_runs`, `payslips` | scaffolded |
-| Inventory/store | `inventory_items`, `inventory_transactions` | scaffolded |
+| Nursery daily logs | `daily_activity_logs`, `milestone_checklists`, `wow_moments` | built |
+| Health/EHR/eMAR | `health_records`, `medication_administrations`, `clinic_visits` | built |
+| HR/Payroll | `staff_profiles`, `payroll_runs`, `payslips` | built |
+| Inventory/store | `inventory_items`, `inventory_transactions` | built |
 | Financial center | `invoices`, `payments` | scaffolded |
-| Predictive analytics | `assessment_scores` (derived) | scaffolded (service class) |
+| Predictive analytics | `assessment_scores` (derived) | built (wired into teacher/parent/learner dashboards) |
 | Gate pass / safety | `gate_passes` | scaffolded |
+| Audit trail | `audit_logs` | built (write-side only — see docs/DECISIONS.md) |
 | 2FA / NIRA / SchoolPay | — | **interfaces/stubs only**, see below |
 | Offline-first sync | — | **not built**, see below |
 
-"Scaffolded" = migrations, models, relationships, and a minimal Blade CRUD screen exist per
-role. It is not feature-complete against every bullet in the plan — it's the skeleton every
-module deepens from.
+"Scaffolded" = migrations, models, relationships, and a minimal read-only Blade screen exist per
+role, with no create/edit workflow yet. "Built" = a real CRUD workflow exists (create, view, and
+the relevant role-scoped authorization) — see `docs/DECISIONS.md` for the product-decision
+defaults (grading weights, PAYE/NSSF rates, etc.) adopted where the plan didn't specify a
+formula.
 
 ## Deliberately stubbed, not built
 
@@ -90,3 +93,7 @@ P_pred = Σ (1-λ)^(i-1) · x_i  /  Σ (1-λ)^(i-1)     for i = 1..n, i=1 most r
 Run per student per subject over their `assessment_scores`, compared against the class mean.
 When `P_pred` drops meaningfully below the student's own baseline or the class mean, it raises a
 `support_strategy_alert` visible to the teacher and the linked parent(s).
+
+Wired into `DashboardController`: the teacher dashboard lists Support Strategy alerts across all
+of a teacher's subject/class assignments; the parent and learner dashboards show each subject's
+predicted trend for their own child/themselves.

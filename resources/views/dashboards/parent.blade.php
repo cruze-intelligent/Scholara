@@ -21,6 +21,16 @@
                         <p class="text-gray-500 text-sm mb-4">No scores recorded yet.</p>
                     @endforelse
 
+                    @if ($student->subjectPredictions->isNotEmpty())
+                        <p class="text-sm text-gray-500 mt-4 mb-2">Performance trend</p>
+                        @foreach ($student->subjectPredictions as $prediction)
+                            <div class="border-b border-gray-100 py-2 last:border-0 flex justify-between text-sm">
+                                <span>{{ $prediction['subject']->name }}</span>
+                                <span>{{ $prediction['predicted'] !== null ? round($prediction['predicted'], 1) : '—' }}</span>
+                            </div>
+                        @endforeach
+                    @endif
+
                     <p class="text-sm text-gray-500 mt-4 mb-2">Invoices</p>
                     @forelse ($student->invoices as $invoice)
                         <div class="border-b border-gray-100 py-2 last:border-0 flex justify-between text-sm">

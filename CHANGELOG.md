@@ -2,6 +2,47 @@
 
 Running log of what's been built, in plain language. Newest first.
 
+## 2026-08-21
+
+- Fixed the Render staging build (`libsqlite3-dev` was missing for `pdo_sqlite`'s headers) —
+  committed; still needs a `git push` from a normal terminal since this sandboxed session can't
+  complete GitHub's interactive credential prompt.
+- Built out Phase 1 and Phase 2 from `docs/ROADMAP.md` in one pass, on top of the Phase 0
+  read-only scaffold:
+  - **Academics**: real marksheet entry (`AssessmentController`/`AssessmentScoreController`) with
+    MOT/EOT/AoI weighting and raw→scaled auto-scaling (`GradingService`), noticeboard
+    (draft/publish), issue reporting with a status/assignment workflow, attendance-taking with
+    gender-based stats, and `PerformancePredictor` wired into the teacher (Support Strategy
+    alerts) and parent/learner (predicted trend) dashboards — it existed since Phase 0 but was
+    never called from anywhere.
+  - **Health**: nurse portal — health record editing, medication administration with a real
+    five-discrete-check Five Rights UI (replacing the old single boolean), clinic visit logging,
+    and mail notifications to guardians on both events.
+  - **HR/Payroll**: `PayeCalculator`/`NssfCalculator` (Uganda URA bands / 5% NSSF — see
+    `docs/DECISIONS.md`), payroll run creation and payslip generation from each staff member's
+    new `monthly_gross_salary` field.
+  - **Inventory**: stock in/out transactions that actually keep `InventoryItem.quantity` in sync
+    (via an observer — previously nothing did this).
+  - **Nursery**: daily activity logs, milestone checklists (static catalog), WOW moments with
+    photo upload.
+  - **Foundational**: registered Spatie's `role` middleware (was installed but never wired into
+    `bootstrap/app.php`), a `BelongsToSchool` trait replacing repeated ad hoc school-scoping, a
+    write-side `Auditable` trait + `audit_logs` table for health/financial models per
+    `docs/COMPLIANCE.md`, and a `teacher_subject_assignments` table (the schema previously had no
+    way to express "this teacher teaches this subject in this class" beyond one homeroom
+    teacher per class).
+  - Extended `DemoDataSeeder` with subjects, assessments/scores, attendance, a notice, and
+    inventory items so the new screens have real data on first login, and added a representative
+    Feature/Unit test suite for the new controllers and calculators.
+  - Documented every formula/rate that had no source in the plan's docs (grading weights,
+    PAYE/NSSF, Five Rights, gender-stat metric) as explicit, swappable defaults — see
+    `docs/DECISIONS.md`.
+  - **Not verified end-to-end this session**: local PHP CLI execution hit environment issues in
+    this sandboxed shell (missing VC++ runtime, then `artisan` hanging even after working around
+    it) — unlike Phase 0, this work has not been manually clicked through yet. Run
+    `php artisan migrate && php artisan db:seed && php artisan test` from a normal terminal before
+    treating this as verified.
+
 ## 2026-08-20
 
 - Installed Laragon (PHP 8.3.33, Composer, MySQL 8.4) and enabled OPcache — the dev server was

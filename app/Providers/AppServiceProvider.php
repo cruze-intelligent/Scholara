@@ -8,6 +8,8 @@ use App\Services\Notifications\LoggingOtpSender;
 use App\Services\Notifications\OtpSender;
 use App\Services\Payments\FakePaymentGateway;
 use App\Services\Payments\PaymentGateway;
+use App\Models\InventoryTransaction;
+use App\Observers\InventoryTransactionObserver;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -29,6 +31,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        InventoryTransaction::observe(InventoryTransactionObserver::class);
     }
 }

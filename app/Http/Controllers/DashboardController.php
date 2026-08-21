@@ -13,7 +13,9 @@ use App\Models\SchoolClass;
 use App\Models\StaffProfile;
 use App\Models\Student;
 use App\Models\User;
+use App\Services\Analytics\PerformancePredictor;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -45,27 +47,36 @@ class DashboardController extends Controller
         return [
             'studentCount' => Student::where('school_id', $schoolId)->count(),
             'staffCount' => StaffProfile::whereHas('user', fn ($q) => $q->where('school_id', $schoolId))->count(),
-            'openIncidents' => IncidentReport::where('school_id', $schoolId)->where('status', '!=', 'resolved')->count(),
-            'recentNotices' => Notice::where('school_id', $schoolId)->latest('published_at')->take(5)->get(),
+            'openIncidents' => IncidentReport::where('status', '!=', 'resolved')->count(),
+            'recentNotices' => Notice::latest('published_at')->take(5)->get(),
         ];
     }
 
     private function teacherData(User $user): array
     {
+        $classes = SchoolClass::where('teacher_id', $user->id)->withCount('students')->get();
+
+        $upcomingLessonPlans = LessonPlan::where('teacher_id', $user->id)
+            ->whereDate('date', '>=', now())
+            ->orderBy('date')
+            ->take(5)
+            ->get();
+
+        $assignments = $user->teacherSubjectAssignments()->with(['subject', 'schoolClass.students'])->get();
+
         return [
-            'classes' => SchoolClass::where('teacher_id', $user->id)->withCount('students')->get(),
-            'upcomingLessonPlans' => LessonPlan::where('teacher_id', $user->id)
-                ->whereDate('date', '>=', now())
-                ->orderBy('date')
-                ->take(5)
-                ->get(),
+            'classes' => $classes,
+            'upcomingLessonPlans' => $upcomingLessonPlans,
+            'supportAlerts' => $this->supportStrategyAlerts($assignments),
         ];
     }
 
     private function parentData(User $user): array
     {
         $guardian = $user->guardian;
-        $students = $guardian ? $guardian->students()->with(['assessmentScores.assessment', 'invoices'])->get() : collect();
+        $students = $guardian ? $guardian->students()->with(['assessmentScores.assessment.subject', 'invoices'])->get() : collect();
+
+        $students->each(fn ($student) => $student->subjectPredictions = $this->subjectPredictions($student));
 
         return ['students' => $students];
     }
@@ -76,16 +87,15 @@ class DashboardController extends Controller
 
         return [
             'student' => $student,
-            'notices' => $student ? Notice::where('school_id', $student->school_id)->latest('published_at')->take(5)->get() : collect(),
+            'subjectPredictions' => $student ? $this->subjectPredictions($student) : collect(),
+            'notices' => $student ? Notice::latest('published_at')->take(5)->get() : collect(),
         ];
     }
 
     private function nurseData(User $user): array
     {
-        $schoolId = $user->school_id;
-
         return [
-            'recentVisits' => ClinicVisit::whereHas('student', fn ($q) => $q->where('school_id', $schoolId))
+            'recentVisits' => ClinicVisit::whereHas('student', fn ($q) => $q->where('school_id', $user->school_id))
                 ->latest('occurred_at')->take(10)->get(),
         ];
     }
@@ -96,7 +106,7 @@ class DashboardController extends Controller
 
         return [
             'staffCount' => StaffProfile::whereHas('user', fn ($q) => $q->where('school_id', $schoolId))->count(),
-            'latestPayrollRun' => PayrollRun::where('school_id', $schoolId)->latest('period_end')->first(),
+            'latestPayrollRun' => PayrollRun::latest('period_end')->first(),
         ];
     }
 
@@ -114,10 +124,78 @@ class DashboardController extends Controller
 
     private function librarianData(User $user): array
     {
-        $schoolId = $user->school_id;
-
         return [
-            'items' => InventoryItem::where('school_id', $schoolId)->orderBy('quantity')->get(),
+            'items' => InventoryItem::orderBy('quantity')->get(),
         ];
+    }
+
+    /**
+     * A student's predicted-trend per subject they have scores in, for the
+     * parent/learner dashboards — thin wrapper around PerformancePredictor.
+     */
+    private function subjectPredictions(Student $student): Collection
+    {
+        $predictor = app(PerformancePredictor::class);
+
+        return $student->assessmentScores->pluck('assessment.subject')->filter()->unique('id')
+            ->map(fn ($subject) => [
+                'subject' => $subject,
+                'predicted' => $predictor->predictForStudentSubject($student, $subject),
+            ])
+            ->values();
+    }
+
+    /**
+     * Support Strategy alerts (docs/ARCHITECTURE.md) for every student a
+     * teacher's subject/class assignments cover — flags students whose
+     * predicted performance has dropped notably below their own baseline
+     * or the class mean.
+     */
+    private function supportStrategyAlerts(Collection $assignments): array
+    {
+        $predictor = app(PerformancePredictor::class);
+        $alerts = [];
+
+        foreach ($assignments as $assignment) {
+            $subject = $assignment->subject;
+            $students = $assignment->schoolClass->students;
+
+            $classMean = $students
+                ->map(fn ($student) => $predictor->predictForStudentSubject($student, $subject))
+                ->filter()
+                ->avg();
+
+            if ($classMean === null) {
+                continue;
+            }
+
+            foreach ($students as $student) {
+                $scores = $student->assessmentScores()
+                    ->whereHas('assessment', fn ($q) => $q->where('subject_id', $subject->id))
+                    ->orderByDesc('recorded_at')
+                    ->pluck('scaled_score')
+                    ->filter()
+                    ->map(fn ($v) => (float) $v)
+                    ->all();
+
+                if (count($scores) < 2) {
+                    continue;
+                }
+
+                $baseline = array_sum($scores) / count($scores);
+                $predicted = $predictor->predict($scores);
+
+                if ($predictor->needsSupportStrategyAlert($predicted, $baseline, $classMean)) {
+                    $alerts[] = [
+                        'student' => $student,
+                        'subject' => $subject,
+                        'predicted' => round($predicted, 1),
+                        'baseline' => round($baseline, 1),
+                    ];
+                }
+            }
+        }
+
+        return $alerts;
     }
 }

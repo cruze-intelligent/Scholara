@@ -13,21 +13,31 @@
 - [x] Stub services for NIRA, OTP/2FA, SchoolPay (interfaces + fake implementations).
 - [ ] First push to GitHub.
 
-## Phase 1 — Deepen the core (Learner/Parent/Teacher loop)
+## Phase 1 — Deepen the core (Learner/Parent/Teacher loop) — done 2026-08-21
 
-- Real marksheet entry with MOT/EOT weighting and auto-scaling.
-- Noticeboard + issue reporting (RTRR-aligned) fully wired, not just scaffolded.
-- Attendance with gender-based stats.
-- Predictive analytics (`PerformancePredictor`) running on real assessment data, surfacing
-  Support Strategy alerts to teacher + parent dashboards.
+- [x] Real marksheet entry with MOT/EOT weighting and auto-scaling — see
+      [docs/DECISIONS.md](./DECISIONS.md) for the adopted weighting split.
+- [x] Noticeboard + issue reporting (RTRR-aligned) fully wired, not just scaffolded.
+- [x] Attendance with gender-based stats.
+- [x] Predictive analytics (`PerformancePredictor`) running on real assessment data, surfacing
+      Support Strategy alerts to teacher + parent/learner dashboards.
+- Follow-up: a real teacher-facing composite-grade report (per-subject term grade using
+  `GradingService::compositeScore`) isn't surfaced in a screen yet, only the raw per-assessment
+  scores — the service exists but only `scaleScore`/`classMeanFor` are wired into views so far.
 
-## Phase 2 — Health, HR, inventory
+## Phase 2 — Health, HR, inventory — done 2026-08-21
 
-- Nurse portal: EHR, eMAR with Five Rights checks, clinic visit logging, parent notification on
-  medication/visit events.
-- HR/Payroll: staff profiles, payroll periods, PAYE/NSSF deduction calculation.
-- Inventory/store: library + canteen + equipment tracking.
-- Nursery-specific: daily activity logs, milestone checklists, WOW moments journaling.
+- [x] Nurse portal: EHR (health record edit), eMAR with real Five Rights checks, clinic visit
+      logging, parent notification on medication/visit events (mail notifications).
+- [x] HR/Payroll: staff profiles (extended with a salary field), payroll periods, PAYE/NSSF
+      deduction calculation — see [docs/DECISIONS.md](./DECISIONS.md) for the rates used.
+- [x] Inventory/store: library + canteen + equipment tracking, with stock in/out keeping
+      `quantity` in sync automatically.
+- [x] Nursery-specific: daily activity logs, milestone checklists (static catalog — no lookup
+      table), WOW moments journaling (with photo upload).
+- Follow-up: read-side audit logging (every `show`/view, not just writes) and a real teacher↔
+  subject assignment admin screen (assignments are currently seeded/DB-only, no CRUD UI for an
+  admin to create them).
 
 ## Phase 3 — Integrations (needs external accounts)
 

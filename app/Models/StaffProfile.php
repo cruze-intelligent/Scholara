@@ -8,10 +8,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class StaffProfile extends Model
 {
-    protected $fillable = ['user_id', 'trn', 'role_title', 'hire_date'];
+    protected $fillable = ['user_id', 'trn', 'role_title', 'hire_date', 'monthly_gross_salary'];
 
     protected $casts = [
         'hire_date' => 'date',
+        'monthly_gross_salary' => 'decimal:2',
     ];
 
     public function user(): BelongsTo

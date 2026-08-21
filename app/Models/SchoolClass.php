@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToSchool;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SchoolClass extends Model
 {
+    use BelongsToSchool, HasFactory;
+
     protected $table = 'school_classes';
 
     protected $fillable = ['school_id', 'name', 'level', 'teacher_id'];
@@ -35,5 +39,10 @@ class SchoolClass extends Model
     public function attendanceRecords(): HasMany
     {
         return $this->hasMany(AttendanceRecord::class);
+    }
+
+    public function teacherSubjectAssignments(): HasMany
+    {
+        return $this->hasMany(TeacherSubjectAssignment::class);
     }
 }

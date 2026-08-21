@@ -15,6 +15,49 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+
+                    @hasanyrole(['admin', 'teacher'])
+                        <x-nav-link :href="route('assessments.index')" :active="request()->routeIs('assessments.*')">
+                            {{ __('Assessments') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('attendance.create')" :active="request()->routeIs('attendance.*')">
+                            {{ __('Attendance') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('notices.index')" :active="request()->routeIs('notices.*')">
+                            {{ __('Noticeboard') }}
+                        </x-nav-link>
+                    @endhasanyrole
+
+                    <x-nav-link :href="route('incidents.index')" :active="request()->routeIs('incidents.*')">
+                        {{ __('Issue Reports') }}
+                    </x-nav-link>
+
+                    @hasanyrole(['nurse', 'admin'])
+                        <x-nav-link :href="route('medications.index')" :active="request()->routeIs('medications.*')">
+                            {{ __('eMAR') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('clinic-visits.index')" :active="request()->routeIs('clinic-visits.*')">
+                            {{ __('Clinic') }}
+                        </x-nav-link>
+                    @endhasanyrole
+
+                    @hasanyrole(['hr', 'admin'])
+                        <x-nav-link :href="route('payroll-runs.index')" :active="request()->routeIs('payroll-runs.*')">
+                            {{ __('Payroll') }}
+                        </x-nav-link>
+                    @endhasanyrole
+
+                    @hasanyrole(['librarian', 'admin'])
+                        <x-nav-link :href="route('inventory-items.index')" :active="request()->routeIs('inventory-items.*')">
+                            {{ __('Inventory') }}
+                        </x-nav-link>
+                    @endhasanyrole
+
+                    @hasanyrole(['teacher', 'nurse', 'admin'])
+                        <x-nav-link :href="route('daily-activity-logs.index')" :active="request()->routeIs('daily-activity-logs.*')">
+                            {{ __('Nursery') }}
+                        </x-nav-link>
+                    @endhasanyrole
                 </div>
             </div>
 
@@ -70,6 +113,31 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+
+            @hasanyrole(['admin', 'teacher'])
+                <x-responsive-nav-link :href="route('assessments.index')">{{ __('Assessments') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('attendance.create')">{{ __('Attendance') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('notices.index')">{{ __('Noticeboard') }}</x-responsive-nav-link>
+            @endhasanyrole
+
+            <x-responsive-nav-link :href="route('incidents.index')">{{ __('Issue Reports') }}</x-responsive-nav-link>
+
+            @hasanyrole(['nurse', 'admin'])
+                <x-responsive-nav-link :href="route('medications.index')">{{ __('eMAR') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('clinic-visits.index')">{{ __('Clinic') }}</x-responsive-nav-link>
+            @endhasanyrole
+
+            @hasanyrole(['hr', 'admin'])
+                <x-responsive-nav-link :href="route('payroll-runs.index')">{{ __('Payroll') }}</x-responsive-nav-link>
+            @endhasanyrole
+
+            @hasanyrole(['librarian', 'admin'])
+                <x-responsive-nav-link :href="route('inventory-items.index')">{{ __('Inventory') }}</x-responsive-nav-link>
+            @endhasanyrole
+
+            @hasanyrole(['teacher', 'nurse', 'admin'])
+                <x-responsive-nav-link :href="route('daily-activity-logs.index')">{{ __('Nursery') }}</x-responsive-nav-link>
+            @endhasanyrole
         </div>
 
         <!-- Responsive Settings Options -->

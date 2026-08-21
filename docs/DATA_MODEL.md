@@ -11,7 +11,8 @@ update it if a migration ends up shaped differently than what's written here.
   Roles/permissions via `spatie/laravel-permission`.
 - **consents** — user_id, type (e.g. `data_processing`), version, accepted_at, ip_address.
 - **staff_profiles** — user_id, trn (7-digit Teacher Reference Number, nullable for non-teaching
-  staff), role_title, hire_date.
+  staff), role_title, hire_date, monthly_gross_salary (nullable — payroll generation skips staff
+  without one set).
 - **guardians** — user_id, relationship_to_student.
 - **students** — school_id, user_id (nullable — the learner's own login account, if the school
   issues one), admission_no, first_name, last_name, dob, gender, school_class_id,
@@ -19,6 +20,13 @@ update it if a migration ends up shaped differently than what's written here.
 - **student_guardian** — student_id, guardian_id (pivot; this is the access-control boundary
   described in `COMPLIANCE.md`).
 - **school_classes** — school_id, name, level, teacher_id (class teacher).
+- **teacher_subject_assignments** — teacher_id, subject_id, school_class_id (which teacher
+  teaches which subject in which class — needed for marksheet-entry authorization; a class's
+  single `teacher_id` above is only the homeroom teacher, not every subject teacher).
+- **audit_logs** — user_id, auditable_type, auditable_id (polymorphic), action
+  (view/create/update/delete), changes (JSON). Write-side only for now (model `created`/
+  `updated`/`deleted` events) on health and financial models, per the audit-trail requirement in
+  `COMPLIANCE.md`; read-side auditing (logging every `show`) is a follow-up.
 
 ## Academics
 
@@ -52,8 +60,11 @@ update it if a migration ends up shaped differently than what's written here.
 
 - **health_records** — student_id, chronic_conditions (JSON), allergies (JSON), vaccinations
   (JSON), emergency_contacts (JSON), family_physician (JSON).
-- **medication_administrations** — student_id, medication_name, dose, administered_by,
-  administered_at, five_rights_checked (bool), notes.
+- **medication_administrations** — student_id, medication_name, dose, route, administered_by,
+  administered_at, scheduled_time, five discrete `checked_right_*` booleans (patient/drug/dose/
+  route/time — the actual nursing Five Rights, replacing the original single
+  `five_rights_checked` flag), notes. `five_rights_checked` is now a computed accessor (true only
+  when all five checks are true), not a stored column.
 - **clinic_visits** — student_id, reason, diagnosis, treatment, outcome
   (returned_to_class/sick_bay/referred_to_hospital), logged_by, occurred_at.
 
