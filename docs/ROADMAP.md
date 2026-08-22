@@ -11,7 +11,7 @@
 - [x] One minimal Blade screen per role so every role can log in and see *something* real —
       verified end-to-end for all 8 roles against seeded demo data.
 - [x] Stub services for NIRA, OTP/2FA, SchoolPay (interfaces + fake implementations).
-- [ ] First push to GitHub.
+- [x] First push to GitHub.
 
 ## Phase 1 — Deepen the core (Learner/Parent/Teacher loop) — done 2026-08-21
 
@@ -38,6 +38,10 @@
 - Follow-up: read-side audit logging (every `show`/view, not just writes) and a real teacher↔
   subject assignment admin screen (assignments are currently seeded/DB-only, no CRUD UI for an
   admin to create them).
+- Verified 2026-08-22: this code had never actually been migrated/seeded against a running
+  database on this machine — MySQL couldn't start (see CHANGELOG.md). Fixed the local
+  environment, then ran `migrate` + `db:seed` + the full test suite for the first time end to
+  end: 48/48 passing after fixing a decimal-cast bug the mismatch exposed (see below).
 
 ## Phase 3 — Integrations (needs external accounts)
 

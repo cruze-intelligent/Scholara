@@ -10,6 +10,7 @@ class Payment extends Model
     protected $fillable = ['invoice_id', 'amount', 'method', 'reference', 'paid_at', 'gateway_response'];
 
     protected $casts = [
+        'amount' => 'decimal:2',
         'paid_at' => 'datetime',
         'gateway_response' => 'array',
     ];

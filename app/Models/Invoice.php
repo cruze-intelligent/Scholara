@@ -11,6 +11,7 @@ class Invoice extends Model
     protected $fillable = ['student_id', 'term', 'amount_due', 'due_date', 'status'];
 
     protected $casts = [
+        'amount_due' => 'decimal:2',
         'due_date' => 'date',
     ];
 

@@ -15,6 +15,10 @@ class Assessment extends Model
         'school_id', 'subject_id', 'school_class_id', 'type', 'term', 'max_score', 'weight',
     ];
 
+    protected $casts = [
+        'weight' => 'decimal:2',
+    ];
+
     public function school(): BelongsTo
     {
         return $this->belongsTo(School::class);

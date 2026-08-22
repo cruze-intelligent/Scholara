@@ -13,6 +13,8 @@ class AssessmentScore extends Model
     ];
 
     protected $casts = [
+        'raw_score' => 'decimal:2',
+        'scaled_score' => 'decimal:2',
         'recorded_at' => 'datetime',
         'synced_at' => 'datetime',
         'dirty' => 'boolean',

@@ -2,6 +2,37 @@
 
 Running log of what's been built, in plain language. Newest first.
 
+## 2026-08-22
+
+- Verified the Aug 21 Phase 1/2 work end-to-end for the first time, as flagged as outstanding
+  below — it turned out nothing had actually run against a live database on this machine yet;
+  `php artisan migrate` had never succeeded here.
+- Root cause of the earlier `artisan` hang and the `intl` extension warning: this machine was
+  missing the Microsoft Visual C++ Redistributable (x64) (`msvcp140.dll` specifically). That
+  silently broke two unrelated things at once — PHP's `intl` extension failed to load, and
+  `mysqld.exe` couldn't start at all (`STATUS_DLL_NOT_FOUND`). User installed the redistributable;
+  both cleared up immediately.
+- Found and fixed a second, independent MySQL problem underneath that: Laragon's `my.ini` (which
+  it regenerates from `usr/laragon.ini` on every start, so it's not hand-editable) pointed
+  `datadir` at `C:/laragon/data/mysql-8.4`, an empty/never-initialized folder, while the real
+  seeded data from Aug 20 sat in a differently-named `data/mysql` folder nothing pointed to
+  anymore. Initialized a fresh MySQL system schema in the directory Laragon actually expects
+  (`mysqld --initialize-insecure`) rather than hand-relocating a live InnoDB datadir — the old
+  data was disposable demo/seed data, not worth the corruption risk of moving it live. Also had to
+  disable MySQL's auto-generated SSL/RSA certs (`--auto_generate_certs=OFF`); with them on,
+  `--initialize` hung for minutes generating keys against this machine's slow entropy source.
+- Created the `scholara` MySQL database and app user matching `.env`, then ran `migrate`,
+  `db:seed`, and the full test suite for real: 47/48 passed, one genuine bug —
+  `AssessmentTest` expected `raw_score` back as the string `"25.00"` but got the integer `25`.
+  Cause: `AssessmentScore` had no cast on its `decimal(6,2)` columns, so the value round-trips
+  differently depending on DB driver — MySQL returns decimal columns as strings, SQLite (used by
+  `phpunit.xml` for tests, and by the Render staging deploy in production) doesn't enforce the
+  declared precision and hands back whatever numeric type it stored. Added `decimal:2` casts so
+  the value is consistent regardless of driver, then audited every other undecorated `decimal()`
+  column for the same gap: `Payment.amount`, `Invoice.amount_due`, and all four `Payslip` money
+  columns (`gross_pay`, `paye`, `nssf`, `net_pay`) had the identical latent bug, just not yet
+  caught by a test. Full suite now 48/48.
+
 ## 2026-08-21
 
 - Fixed the Render staging build (`libsqlite3-dev` was missing for `pdo_sqlite`'s headers) —
