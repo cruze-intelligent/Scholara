@@ -42,7 +42,7 @@ See [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) for pushing this to the
 - [docs/DATA_MODEL.md](./docs/DATA_MODEL.md) — core database entities
 - [docs/COMPLIANCE.md](./docs/COMPLIANCE.md) — Data Protection & Privacy Act 2019, NIRA, PDPO, 2FA
 - [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) — cPanel subdomain deployment
-- [docs/STAGING.md](./docs/STAGING.md) — free public preview deploy (Render) for testing before the subdomain exists
+- [docs/STAGING.md](./docs/STAGING.md) — public preview deploy (Laravel Cloud) for testing before the subdomain exists
 - [docs/PERFORMANCE.md](./docs/PERFORMANCE.md) — keeping PHP/MySQL from slowing down the machine
 - [docs/ROADMAP.md](./docs/ROADMAP.md) — build phases and current status
 - [docs/DECISIONS.md](./docs/DECISIONS.md) — product defaults adopted where the plan didn't

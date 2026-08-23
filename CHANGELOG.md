@@ -2,6 +2,25 @@
 
 Running log of what's been built, in plain language. Newest first.
 
+## 2026-08-23 (3)
+
+- Moved the public staging preview from Render to [Laravel Cloud](https://cloud.laravel.com) —
+  real persistent MySQL instead of SQLite-in-a-container, no Dockerfile to maintain, and it's the
+  platform the user was already trying to use. Removed `Dockerfile`, `docker/entrypoint.sh`,
+  `render.yaml`, `.dockerignore`; rewrote `docs/STAGING.md` around Laravel Cloud.
+- The Laravel Cloud environment existed but was never actually configured: no database attached
+  (every DB-touching request 500'd), and after attaching one, `DB_CONNECTION` was still unset so
+  the app kept trying to open a SQLite file that didn't exist (`Laravel Cloud auto-injects
+  DB_HOST`/`DB_USERNAME`/etc. when you attach a database, but not `DB_CONNECTION` itself — an easy
+  trap). Fixed by installing the Laravel Cloud CLI (`laravel/cloud-cli`, needs PHP >=8.4 — this
+  machine only had 8.3, so a standalone PHP 8.4.24 was set up alongside it with `zip` and
+  `sockets` extensions enabled, both required by the CLI and its browser-based OAuth login) and
+  driving the rest from the terminal: set `DB_CONNECTION=mysql`, `SEED_DEMO_DATA=true`, `APP_URL`,
+  and added `php artisan db:seed --force` to the deploy command. Verified live via `cloud tinker`
+  querying the real production database directly (`User::count()` → 8, matching the demo seed).
+- Live at https://scholara-production-nujkni.laravel.cloud — 8 demo accounts (one per role,
+  `<role>@scholara.test` / `password`), documented in `docs/STAGING.md`.
+
 ## 2026-08-23 (2)
 
 - Built the Financial Center's actual payment collection — previously `PaymentGateway` was a
