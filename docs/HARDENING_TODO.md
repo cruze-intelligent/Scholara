@@ -147,6 +147,43 @@ Not in the original plan — mid-build feedback after Phase 2 landed.
 - [x] Feature tests: `SchoolSettingsTest`, `StudentPhotoTest`, plus two new cases in
       `UserManagementTest` for staff/new-child photo upload. 82/82 passing.
 
+## Phase 2.6 — Nav rewrite v2, component polish, trend reports — done 2026-08-23
+
+More mid-build feedback, same day: the `xl:` breakpoint fix above still wasn't right — at
+in-between widths the flat desktop row and the hamburger could both end up not showing cleanly,
+and a 9+ item single row was never going to be "clear and easy to follow" regardless of where it
+broke. Went with a more decisive fix instead of another breakpoint tweak.
+
+- [x] **Nav is now always the hamburger/off-canvas menu**, at every screen width — no more
+      breakpoint to get wrong. The header itself is now just logo, a noticeboard bell (badge =
+      notices published in the last 3 days — a lightweight proxy, not true per-user read
+      tracking, which would need its own pivot table), the user menu, and the toggle. The
+      previously-added `<x-nav-dropdown>` component is gone — no longer needed once there's no
+      flat row to group items within; the off-canvas menu uses small uppercase section labels
+      (Academics, My Records, Health, Operations) instead.
+- [x] **Cards and buttons modernized**: `<x-card>` gets a softer `rounded-xl` + subtle
+      `ring-1 ring-gray-950/5` instead of a hard border, for a more "floating" feel. The three
+      button components were still the stock Breeze defaults — `bg-gray-800` (not even the
+      app's indigo accent used everywhere else), uppercase tiny tracked-out text, `rounded-md`.
+      Rewrote all three to `rounded-lg`, normal-case `text-sm`, indigo/red at full saturation
+      with a `hover:shadow` lift and `transition-all`, and `disabled:opacity-50
+      disabled:pointer-events-none` (previously only secondary had a disabled state at all).
+      Migrated the admin dashboard's raw `bg-white ... rounded-lg` divs to `<x-card>` while
+      touching that file anyway — the other 7 dashboards still need the same treatment (tracked
+      in Phase 6 below, since that migration was already planned there for dark-mode reasons).
+- [x] **Seed data enriched for real testing**: `DemoDataSeeder` went from 3 students/2 terms
+      of sparse data to 8 students across the Primary 5 class with a real spread (weak/average/
+      strong, each trending upward Term 1 → Term 2, deterministic formulas not `rand()` so
+      re-seeding stays stable), 15 days of attendance with a realistic absent/late mix, 8 clinic
+      visits and 3 medication administrations spread over 2 months with varied reasons/outcomes.
+- [x] **Trend reports**: `ReportController` — `academics()` (average score by subject per term,
+      plus a "students below 60%" list) and `health()` (clinic visits by reason/outcome,
+      medications administered, last 90 days), both as simple CSS-bar visualizations, no chart
+      library. Every query filters by school explicitly via a join rather than relying on a
+      model's `BelongsToSchool` scope, since these are aggregate `DB::table()` queries across
+      tables that don't all carry their own `school_id` (same reasoning as the Phase 0 fixes).
+- [x] Feature tests: `ReportTest`. 85/85 passing.
+
 ## Phase 3 — CRUD depth across every module
 
 Per the audit: every module tops out at `index`/`create`/`store` (routes explicitly

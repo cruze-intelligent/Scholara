@@ -19,6 +19,7 @@ use App\Http\Controllers\MilestoneChecklistController;
 use App\Http\Controllers\NoticeController;
 use App\Http\Controllers\PayrollRunController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SchoolSettingsController;
 use App\Http\Controllers\StudentPhotoController;
 use App\Http\Controllers\UserController;
@@ -67,6 +68,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('attendance', [AttendanceController::class, 'create'])->name('attendance.create');
         Route::post('attendance', [AttendanceController::class, 'store'])->name('attendance.store');
         Route::get('attendance/stats', [AttendanceController::class, 'stats'])->name('attendance.stats');
+
+        Route::get('reports/academics', [ReportController::class, 'academics'])->name('reports.academics');
     });
 
     // Fee payments — guardian self-serve checkout (card or mobile money via DGateway).
@@ -118,6 +121,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::resource('medications', MedicationAdministrationController::class)->only(['index', 'create', 'store']);
         Route::resource('clinic-visits', ClinicVisitController::class)->only(['index', 'create', 'store']);
+
+        Route::get('reports/health', [ReportController::class, 'health'])->name('reports.health');
     });
 
     // HR / Payroll

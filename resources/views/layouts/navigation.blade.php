@@ -1,99 +1,39 @@
+@php
+    $recentNoticeCount = \App\Models\Notice::whereNotNull('published_at')
+        ->where('published_at', '>=', now()->subDays(3))
+        ->count();
+    $noticesRoute = match (true) {
+        auth()->user()->hasAnyRole(['admin', 'teacher']) => route('notices.index'),
+        auth()->user()->hasRole('learner') => route('learner.notices'),
+        default => route('dashboard'),
+    };
+@endphp
+
 <nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
-    <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-            <div class="flex">
-                <!-- Logo -->
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto" />
-                    </a>
-                </div>
+        <div class="flex justify-between items-center h-16">
+            <a href="{{ route('dashboard') }}" class="shrink-0 flex items-center">
+                <x-application-logo class="block h-9 w-auto" />
+            </a>
 
-                <!-- Navigation Links -->
-                <div class="hidden space-x-5 xl:-my-px xl:ms-8 xl:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
-                    </x-nav-link>
-
-                    @hasrole('admin')
-                        <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
-                            {{ __('Users') }}
-                        </x-nav-link>
-                    @endhasrole
-
-                    @hasanyrole(['admin', 'teacher'])
-                        <x-nav-dropdown label="Academics" :active="request()->routeIs(['assessments.*', 'attendance.*', 'notices.*'])">
-                            <x-dropdown-link :href="route('assessments.index')">{{ __('Assessments') }}</x-dropdown-link>
-                            <x-dropdown-link :href="route('attendance.create')">{{ __('Attendance') }}</x-dropdown-link>
-                            <x-dropdown-link :href="route('notices.index')">{{ __('Noticeboard') }}</x-dropdown-link>
-                        </x-nav-dropdown>
-                    @endhasanyrole
-
-                    <x-nav-link :href="route('incidents.index')" :active="request()->routeIs('incidents.*')">
-                        {{ __('Issue Reports') }}
-                    </x-nav-link>
-
-                    @hasanyrole(['bursar', 'admin'])
-                        <x-nav-link :href="route('invoices.index')" :active="request()->routeIs('invoices.*')">
-                            {{ __('Invoices') }}
-                        </x-nav-link>
-                    @endhasanyrole
-
-                    @hasrole('learner')
-                        <x-nav-link :href="route('learner.assessments')" :active="request()->routeIs('learner.assessments')">
-                            {{ __('My Assessments') }}
-                        </x-nav-link>
-                        <x-nav-link :href="route('learner.attendance')" :active="request()->routeIs('learner.attendance')">
-                            {{ __('My Attendance') }}
-                        </x-nav-link>
-                        <x-nav-link :href="route('learner.notices')" :active="request()->routeIs('learner.notices')">
-                            {{ __('Noticeboard') }}
-                        </x-nav-link>
-                    @endhasrole
-
-                    @hasanyrole(['nurse', 'admin'])
-                        <x-nav-dropdown label="Health" :active="request()->routeIs(['medications.*', 'clinic-visits.*'])">
-                            <x-dropdown-link :href="route('medications.index')">{{ __('eMAR') }}</x-dropdown-link>
-                            <x-dropdown-link :href="route('clinic-visits.index')">{{ __('Clinic') }}</x-dropdown-link>
-                        </x-nav-dropdown>
-                    @endhasanyrole
-
-                    @hasanyrole(['hr', 'admin'])
-                        <x-nav-link :href="route('payroll-runs.index')" :active="request()->routeIs('payroll-runs.*')">
-                            {{ __('Payroll') }}
-                        </x-nav-link>
-                    @endhasanyrole
-
-                    @hasanyrole(['librarian', 'admin'])
-                        <x-nav-link :href="route('inventory-items.index')" :active="request()->routeIs('inventory-items.*')">
-                            {{ __('Inventory') }}
-                        </x-nav-link>
-                    @endhasanyrole
-
-                    @if (auth()->user()->school?->offersLevel('nursery'))
-                        @hasanyrole(['teacher', 'nurse', 'admin'])
-                            <x-nav-link :href="route('daily-activity-logs.index')" :active="request()->routeIs('daily-activity-logs.*')">
-                                {{ __('Nursery') }}
-                            </x-nav-link>
-                        @endhasanyrole
+            <!-- Kept deliberately minimal — everything else lives behind the menu toggle so the
+                 header doesn't get crowded as more roles/modules stack up. -->
+            <div class="flex items-center gap-1">
+                <a href="{{ $noticesRoute }}" class="relative p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100" title="Noticeboard">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    @if ($recentNoticeCount > 0)
+                        <span class="absolute top-1 right-1 h-4 min-w-4 px-1 rounded-full bg-indigo-600 text-white text-[10px] font-medium leading-4 text-center">
+                            {{ $recentNoticeCount }}
+                        </span>
                     @endif
+                </a>
 
-                    @hasrole('admin')
-                        <x-nav-link :href="route('school-settings.edit')" :active="request()->routeIs('school-settings.*')">
-                            {{ __('School Settings') }}
-                        </x-nav-link>
-                    @endhasrole
-                </div>
-            </div>
-
-            <!-- Settings Dropdown -->
-            <div class="hidden lg:flex lg:items-center lg:ms-6">
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
                             <div>{{ Auth::user()->name }}</div>
-
                             <div class="ms-1">
                                 <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -103,27 +43,20 @@
                     </x-slot>
 
                     <x-slot name="content">
-                        <x-dropdown-link :href="route('profile.edit')">
-                            {{ __('Profile') }}
-                        </x-dropdown-link>
+                        <x-dropdown-link :href="route('profile.edit')">{{ __('Profile') }}</x-dropdown-link>
 
-                        <!-- Authentication -->
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-
                             <x-dropdown-link :href="route('logout')"
-                                    onclick="event.preventDefault();
-                                                this.closest('form').submit();">
+                                    onclick="event.preventDefault(); this.closest('form').submit();">
                                 {{ __('Log Out') }}
                             </x-dropdown-link>
                         </form>
                     </x-slot>
                 </x-dropdown>
-            </div>
 
-            <!-- Hamburger -->
-            <div class="-me-2 flex items-center lg:hidden">
-                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
+                <button @click="open = ! open" aria-label="Menu"
+                    class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                         <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                         <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -133,77 +66,63 @@
         </div>
     </div>
 
-    <!-- Responsive Navigation Menu -->
-    <div :class="{'block': open, 'hidden': ! open}" class="hidden lg:hidden">
-        <div class="pt-2 pb-3 space-y-1">
+    <!-- Menu — the only nav surface, at every screen width, so there's no breakpoint where the
+         wrong thing shows. Loosely grouped so a long list stays scannable. -->
+    <div x-show="open" x-cloak @click.outside="open = false" class="border-t border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
 
+            @hasrole('admin')
+                <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">{{ __('Users') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('school-settings.edit')" :active="request()->routeIs('school-settings.*')">{{ __('School Settings') }}</x-responsive-nav-link>
+            @endhasrole
+
             @hasanyrole(['admin', 'teacher'])
-                <x-responsive-nav-link :href="route('assessments.index')">{{ __('Assessments') }}</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('attendance.create')">{{ __('Attendance') }}</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('notices.index')">{{ __('Noticeboard') }}</x-responsive-nav-link>
-            @endhasanyrole
-
-            <x-responsive-nav-link :href="route('incidents.index')">{{ __('Issue Reports') }}</x-responsive-nav-link>
-
-            @hasanyrole(['bursar', 'admin'])
-                <x-responsive-nav-link :href="route('invoices.index')">{{ __('Invoices') }}</x-responsive-nav-link>
+                <p class="pt-3 pb-1 px-3 text-xs font-semibold uppercase tracking-wide text-gray-400">{{ __('Academics') }}</p>
+                <x-responsive-nav-link :href="route('assessments.index')" :active="request()->routeIs('assessments.*')">{{ __('Assessments') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('attendance.create')" :active="request()->routeIs('attendance.*')">{{ __('Attendance') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('notices.index')" :active="request()->routeIs('notices.*')">{{ __('Noticeboard') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('reports.academics')" :active="request()->routeIs('reports.academics')">{{ __('Academic Trends') }}</x-responsive-nav-link>
             @endhasanyrole
 
             @hasrole('learner')
-                <x-responsive-nav-link :href="route('learner.assessments')">{{ __('My Assessments') }}</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('learner.attendance')">{{ __('My Attendance') }}</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('learner.notices')">{{ __('Noticeboard') }}</x-responsive-nav-link>
+                <p class="pt-3 pb-1 px-3 text-xs font-semibold uppercase tracking-wide text-gray-400">{{ __('My Records') }}</p>
+                <x-responsive-nav-link :href="route('learner.assessments')" :active="request()->routeIs('learner.assessments')">{{ __('My Assessments') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('learner.attendance')" :active="request()->routeIs('learner.attendance')">{{ __('My Attendance') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('learner.notices')" :active="request()->routeIs('learner.notices')">{{ __('Noticeboard') }}</x-responsive-nav-link>
             @endhasrole
 
             @hasanyrole(['nurse', 'admin'])
-                <x-responsive-nav-link :href="route('medications.index')">{{ __('eMAR') }}</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('clinic-visits.index')">{{ __('Clinic') }}</x-responsive-nav-link>
+                <p class="pt-3 pb-1 px-3 text-xs font-semibold uppercase tracking-wide text-gray-400">{{ __('Health') }}</p>
+                <x-responsive-nav-link :href="route('medications.index')" :active="request()->routeIs('medications.*')">{{ __('eMAR') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('clinic-visits.index')" :active="request()->routeIs('clinic-visits.*')">{{ __('Clinic') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('reports.health')" :active="request()->routeIs('reports.health')">{{ __('Health Trends') }}</x-responsive-nav-link>
             @endhasanyrole
 
+            <p class="pt-3 pb-1 px-3 text-xs font-semibold uppercase tracking-wide text-gray-400">{{ __('Operations') }}</p>
+            <x-responsive-nav-link :href="route('incidents.index')" :active="request()->routeIs('incidents.*')">{{ __('Issue Reports') }}</x-responsive-nav-link>
+            @hasanyrole(['bursar', 'admin'])
+                <x-responsive-nav-link :href="route('invoices.index')" :active="request()->routeIs('invoices.*')">{{ __('Invoices') }}</x-responsive-nav-link>
+            @endhasanyrole
             @hasanyrole(['hr', 'admin'])
-                <x-responsive-nav-link :href="route('payroll-runs.index')">{{ __('Payroll') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('payroll-runs.index')" :active="request()->routeIs('payroll-runs.*')">{{ __('Payroll') }}</x-responsive-nav-link>
             @endhasanyrole
-
             @hasanyrole(['librarian', 'admin'])
-                <x-responsive-nav-link :href="route('inventory-items.index')">{{ __('Inventory') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('inventory-items.index')" :active="request()->routeIs('inventory-items.*')">{{ __('Inventory') }}</x-responsive-nav-link>
             @endhasanyrole
-
             @if (auth()->user()->school?->offersLevel('nursery'))
                 @hasanyrole(['teacher', 'nurse', 'admin'])
-                    <x-responsive-nav-link :href="route('daily-activity-logs.index')">{{ __('Nursery') }}</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('daily-activity-logs.index')" :active="request()->routeIs('daily-activity-logs.*')">{{ __('Nursery') }}</x-responsive-nav-link>
                 @endhasanyrole
             @endif
-
-            @hasrole('admin')
-                <x-responsive-nav-link :href="route('school-settings.edit')">{{ __('School Settings') }}</x-responsive-nav-link>
-            @endhasrole
         </div>
 
-        <!-- Responsive Settings Options -->
-        <div class="pt-4 pb-1 border-t border-gray-200">
-            <div class="px-4">
+        <div class="border-t border-gray-100 py-3">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
                 <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
-            </div>
-
-            <div class="mt-3 space-y-1">
-                <x-responsive-nav-link :href="route('profile.edit')">
-                    {{ __('Profile') }}
-                </x-responsive-nav-link>
-
-                <!-- Authentication -->
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-
-                    <x-responsive-nav-link :href="route('logout')"
-                            onclick="event.preventDefault();
-                                        this.closest('form').submit();">
-                        {{ __('Log Out') }}
-                    </x-responsive-nav-link>
-                </form>
             </div>
         </div>
     </div>

@@ -5,8 +5,10 @@ namespace Database\Seeders;
 use App\Models\Assessment;
 use App\Models\AssessmentScore;
 use App\Models\AttendanceRecord;
+use App\Models\ClinicVisit;
 use App\Models\Guardian;
 use App\Models\InventoryItem;
+use App\Models\MedicationAdministration;
 use App\Models\Notice;
 use App\Models\School;
 use App\Models\SchoolClass;
@@ -125,6 +127,30 @@ class DemoDataSeeder extends Seeder
             ]
         );
 
+        // Five more classmates — enough spread (weak/average/strong) for the trend reports
+        // (docs/HARDENING_TODO.md Phase 3.5) to show something real rather than two data points.
+        $moreClassmates = [];
+        foreach ([
+            ['Three', 'female', 88],
+            ['Four', 'male', 45],
+            ['Five', 'female', 70],
+            ['Six', 'male', 92],
+            ['Seven', 'female', 55],
+        ] as $i => [$lastName, $gender, $baseScore]) {
+            $moreClassmates[$baseScore] = Student::firstOrCreate(
+                ['admission_no' => 'DEMO-'.str_pad((string) (4 + $i), 4, '0', STR_PAD_LEFT)],
+                [
+                    'school_id' => $school->id,
+                    'school_class_id' => $class->id,
+                    'first_name' => 'Classmate',
+                    'last_name' => $lastName,
+                    'dob' => now()->subYears(11),
+                    'gender' => $gender,
+                    'curriculum_level' => 'primary',
+                ]
+            );
+        }
+
         $nurseryStudent = Student::firstOrCreate(
             ['admission_no' => 'DEMO-0003'],
             [
@@ -167,41 +193,98 @@ class DemoDataSeeder extends Seeder
             'school_class_id' => $class->id,
         ]);
 
-        // A few Maths assessments with scores so the predictive-analytics
-        // and marksheet screens have a real trend to show.
+        // Assessments across two terms and both subjects, for every student in the class — a
+        // real spread (weak/average/strong, each trending slightly upward Term 1 -> Term 2) so
+        // the academic trend report (docs/HARDENING_TODO.md Phase 3.5) has something real to
+        // show rather than two data points. Deterministic (no rand()), so re-seeding is stable.
         $grading = new GradingService;
-        $scores = ['AoI' => [78, 65], 'MOT' => [70, 60], 'EOT' => [82, 55]];
+        $classRoster = [75 => $student, 60 => $classmate, ...$moreClassmates];
 
-        foreach ($scores as $type => [$demoScore, $classmateScore]) {
-            $assessment = Assessment::firstOrCreate(
-                ['school_id' => $school->id, 'subject_id' => $math->id, 'school_class_id' => $class->id, 'type' => $type, 'term' => 'Term 2 2026'],
-                ['max_score' => 100, 'weight' => 1]
-            );
+        foreach (['Term 1 2026', 'Term 2 2026'] as $term) {
+            $termBonus = $term === 'Term 2 2026' ? 6 : 0;
 
-            foreach ([$student->id => $demoScore, $classmate->id => $classmateScore] as $studentId => $raw) {
-                AssessmentScore::updateOrCreate(
-                    ['assessment_id' => $assessment->id, 'student_id' => $studentId],
-                    [
-                        'raw_score' => $raw,
-                        'scaled_score' => $grading->scaleScore($raw, (float) $assessment->max_score),
-                        'recorded_by' => $teacherUser->id,
-                        'recorded_at' => now(),
-                    ]
+            foreach ([$math, $english] as $subject) {
+                foreach (GradingService::TYPE_WEIGHTS as $type => $weight) {
+                    $typeAdjust = match ($type) {
+                        'AoI' => -5, 'MOT' => -3, default => 0,
+                    };
+
+                    $assessment = Assessment::firstOrCreate(
+                        ['school_id' => $school->id, 'subject_id' => $subject->id, 'school_class_id' => $class->id, 'type' => $type, 'term' => $term],
+                        ['max_score' => 100, 'weight' => 1]
+                    );
+
+                    foreach ($classRoster as $baseScore => $rosterStudent) {
+                        $raw = max(20, min(100, $baseScore + $termBonus + $typeAdjust));
+
+                        AssessmentScore::updateOrCreate(
+                            ['assessment_id' => $assessment->id, 'student_id' => $rosterStudent->id],
+                            [
+                                'raw_score' => $raw,
+                                'scaled_score' => $grading->scaleScore($raw, (float) $assessment->max_score),
+                                'recorded_by' => $teacherUser->id,
+                                'recorded_at' => now(),
+                            ]
+                        );
+                    }
+                }
+            }
+        }
+
+        // Attendance for the last 15 school days, every student — a few absences/lates spread
+        // deterministically by student index so the gender-stats report has a real gap to show.
+        $rosterByIndex = array_values($classRoster);
+
+        foreach (range(0, 14) as $daysAgo) {
+            $date = now()->subDays($daysAgo)->toDateString();
+
+            foreach ($rosterByIndex as $i => $rosterStudent) {
+                $status = match (true) {
+                    ($daysAgo + $i) % 7 === 0 => 'absent',
+                    ($daysAgo + $i) % 5 === 0 => 'late',
+                    default => 'present',
+                };
+
+                AttendanceRecord::updateOrCreate(
+                    ['school_class_id' => $class->id, 'student_id' => $rosterStudent->id, 'date' => $date],
+                    ['status' => $status, 'recorded_by' => $teacherUser->id]
                 );
             }
         }
 
-        // Attendance for the last 5 school days, both students.
-        foreach (range(0, 4) as $daysAgo) {
-            $date = now()->subDays($daysAgo)->toDateString();
+        // Clinic visits + medication administrations spread over the last two months, varied
+        // reasons/outcomes across several students, so the health trend report
+        // (docs/HARDENING_TODO.md Phase 3.5) has something real to show. Fixed times (not
+        // `now()`'s current time) keep this idempotent across re-seeds on the same day.
+        $nurseUser = User::where('email', 'nurse@scholara.test')->first();
+        $healthRoster = [$student, $classmate, $moreClassmates[88], $moreClassmates[45], $nurseryStudent];
 
-            AttendanceRecord::updateOrCreate(
-                ['school_class_id' => $class->id, 'student_id' => $student->id, 'date' => $date],
-                ['status' => 'present', 'recorded_by' => $teacherUser->id]
+        $visits = [
+            [0, 'Headache', 'returned_to_class'], [3, 'Stomach ache', 'returned_to_class'],
+            [7, 'Fever', 'sick_bay'], [12, 'Minor fall, grazed knee', 'returned_to_class'],
+            [18, 'Fever', 'sick_bay'], [25, 'Allergic reaction', 'referred_to_hospital'],
+            [34, 'Headache', 'returned_to_class'], [48, 'Stomach ache', 'sick_bay'],
+        ];
+
+        foreach ($visits as $i => [$daysAgo, $reason, $outcome]) {
+            $visitStudent = $healthRoster[$i % count($healthRoster)];
+
+            ClinicVisit::firstOrCreate(
+                ['student_id' => $visitStudent->id, 'reason' => $reason, 'occurred_at' => now()->subDays($daysAgo)->setTime(9, 30)],
+                ['outcome' => $outcome, 'logged_by' => $nurseUser->id]
             );
-            AttendanceRecord::updateOrCreate(
-                ['school_class_id' => $class->id, 'student_id' => $classmate->id, 'date' => $date],
-                ['status' => $daysAgo === 0 ? 'absent' : 'present', 'recorded_by' => $teacherUser->id]
+        }
+
+        foreach ([[1, 'Paracetamol', '250mg'], [7, 'Antihistamine', '5ml'], [18, 'Paracetamol', '250mg']] as $i => [$daysAgo, $medication, $dose]) {
+            $medStudent = $healthRoster[$i % count($healthRoster)];
+
+            MedicationAdministration::firstOrCreate(
+                ['student_id' => $medStudent->id, 'medication_name' => $medication, 'administered_at' => now()->subDays($daysAgo)->setTime(10, 0)],
+                [
+                    'dose' => $dose, 'route' => 'oral', 'administered_by' => $nurseUser->id,
+                    'checked_right_patient' => true, 'checked_right_drug' => true, 'checked_right_dose' => true,
+                    'checked_right_route' => true, 'checked_right_time' => true,
+                ]
             );
         }
 

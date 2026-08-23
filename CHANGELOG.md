@@ -2,6 +2,28 @@
 
 Running log of what's been built, in plain language. Newest first.
 
+## 2026-08-23 (7)
+
+- Rewrote the nav a second time: the `xl:` breakpoint fix from earlier today still left a gap
+  where neither the flat row nor the hamburger showed cleanly, and a 9+ item single row was
+  never going to be "clear and easy to follow" regardless of where it broke. Nav is now always
+  the hamburger/off-canvas menu at every width — header is just logo, a noticeboard bell (badge
+  = notices from the last 3 days, not true per-user read tracking), the user menu, and the
+  toggle. Removed the now-unused `<x-nav-dropdown>` component from the earlier attempt.
+- Modernized the shared card/button components — they were still the stock Breeze defaults
+  (`bg-gray-800` primary buttons, not even the app's own indigo accent; uppercase tiny
+  tracked-out text; hard `rounded-md` borders). Cards get a softer `rounded-xl` +
+  `ring-1 ring-gray-950/5`; buttons get `rounded-lg`, normal-case text, a `hover:shadow` lift,
+  and a real disabled state on all three (previously only secondary had one).
+- Enriched `DemoDataSeeder` for real testing: 8 students with a genuine weak/average/strong
+  spread trending upward Term 1 → Term 2 (deterministic formulas, not `rand()`, so re-seeding
+  stays stable), 15 days of attendance with a realistic absent/late mix, 8 clinic visits and 3
+  medication administrations spread over 2 months with varied reasons/outcomes.
+- Added trend reports: `ReportController::academics()` (average score by subject per term, plus
+  a students-below-60% list) and `::health()` (clinic visits by reason/outcome, medications
+  administered, last 90 days) — simple CSS-bar visualizations, no chart library.
+- 85/85 tests passing.
+
 ## 2026-08-23 (6)
 
 - Fixed real nav overflow: the desktop/mobile breakpoint switched at 640px, too early for the
