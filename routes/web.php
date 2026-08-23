@@ -17,6 +17,7 @@ use App\Http\Controllers\MilestoneChecklistController;
 use App\Http\Controllers\NoticeController;
 use App\Http\Controllers\PayrollRunController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\WowMomentController;
 use Illuminate\Support\Facades\Route;
 
@@ -39,6 +40,12 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    // User management — admin-only, scoped to their own school inside the controller.
+    Route::middleware('role:admin')->group(function () {
+        Route::resource('users', UserController::class)->only(['index', 'create', 'store', 'edit', 'update']);
+        Route::patch('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggle-active');
+    });
+
     // Academics — teachers create/mark; admins can also view assessments.
     Route::middleware('role:teacher|admin')->group(function () {
         Route::resource('assessments', AssessmentController::class)->only(['index', 'create', 'store', 'show']);

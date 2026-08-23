@@ -39,19 +39,31 @@ were checked against every school, not just the acting user's:
       listing + input validation) — plus one for the `AssessmentController::index` admin fix.
       57/57 tests passing.
 
-## Phase 1 — User management (admin authority)
+## Phase 1 — User management (admin authority) — done 2026-08-23
 
-Confirmed: **no way for anyone to create/edit a user through the app** — only
-`DemoDataSeeder`/self-registration (which assigns no role) touch `User::create`.
-
-- [ ] `UserController` (admin-only): index (list all users, filterable by role), create, store
-      (create user + assign role + school), edit, update (details + role reassignment), a
-      deactivate/reactivate action (soft-disable rather than hard delete, since users have FK'd
-      history — assessments recorded, payments made, etc.)
-- [ ] Wire `assignRole`/`syncRoles` into the store/update actions (currently only ever called from
-      the seeder)
-- [ ] Nav entry + admin dashboard link
-- [ ] Feature tests: create user, reassign role, non-admin gets 403, deactivated user can't log in
+- [x] `UserController` (admin-only, scoped to the admin's own school): index, create, store, edit,
+      update, plus `toggleActive` (deactivate/reactivate rather than hard delete — users have
+      FK'd history: assessments recorded, payments made, etc.). Deactivated users are blocked at
+      login (`LoginRequest::authenticate`), not just hidden from lists.
+- [x] Store/update wire `assignRole`/`syncRoles` — previously only ever called from the seeder.
+      A generated password is shown once on the success page (no outbound email/SMS exists yet to
+      deliver it another way — see the NIRA/OTP stubs in `docs/DECISIONS.md`).
+- [x] **Parents must be linked to a child, admin creates learners the same way** — added per
+      product feedback mid-build. `store()`/`update()` require at least one child, either an
+      existing `Student` (checkbox list) or a new one entered inline; a `learner` role links to an
+      existing student record with no login yet. Both paths require picking the child's
+      **curriculum level** (nursery/primary/lower secondary/upper secondary) — also per feedback,
+      so a student doesn't show up in modules that don't apply to their level (e.g. nursery daily
+      logs for a primary learner). No hardcoded default level.
+- [x] Nav entry (admin-only) + a "Manage users" link on the admin dashboard
+- [x] Feature tests (`tests/Feature/UserManagementTest.php`): parent+existing child, parent+new
+      child, parent-with-no-child fails validation, learner+existing student, staff+profile,
+      deactivated-user-blocked-at-login, self-deactivation blocked, cross-school 403, non-admin
+      403.
+- [ ] **Follow-up, not built here**: editing curriculum level (or any other field) on an
+      *existing* student still has no screen — `UserController` only sets it when creating a new
+      child inline. Real `Student`/`Guardian` CRUD is still one of the "scaffolded down to nothing"
+      gaps noted in Phase 3 — revisit there rather than bolting more onto `UserController`.
 
 ## Phase 2 — Give bursar and learner a real area
 
