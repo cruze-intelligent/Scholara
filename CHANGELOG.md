@@ -2,6 +2,21 @@
 
 Running log of what's been built, in plain language. Newest first.
 
+## 2026-08-23 (5)
+
+- Phase 2 of the hardening/depth pass (`docs/HARDENING_TODO.md`): bursar and learner both had
+  zero routes of their own before this — dashboard-only. `InvoiceController` gives bursar real
+  invoice creation and manual cash/bank payment recording (completes immediately, unlike the
+  guardian DGateway checkout which starts pending); `LearnerController` gives learners their full
+  assessment/attendance/notice history instead of the dashboard's five-item summaries. Caught one
+  real bug along the way: `InvoiceController::show`/`recordPayment` 500'd instead of returning 403
+  for a cross-school invoice, because `Student`'s own school-scope silently nulls out the
+  relation rather than throwing — fixed with a nullsafe check.
+- Cleaned up now-stale Render references across `CHANGELOG.md`/`docs/DECISIONS.md` — the older
+  entries about setting up and fixing the Render staging deploy are trimmed to what's still
+  relevant now that it's retired, rather than left as clutter about infrastructure that no longer
+  exists.
+
 ## 2026-08-23 (3)
 
 - Moved the public staging preview from Render to [Laravel Cloud](https://cloud.laravel.com) —
@@ -52,12 +67,10 @@ Running log of what's been built, in plain language. Newest first.
 
 ## 2026-08-23
 
-- The Render staging link went live but rendered unstyled — browser console showed "Mixed
-  Content" errors blocking `http://` asset URLs on the `https://` page. Cause: Render terminates
-  TLS at its edge and forwards plain HTTP to the container, and Laravel wasn't told to trust that
-  proxy, so it generated `http://` links even though the page loaded over `https://`. Fixed with
-  `trustProxies(at: '*')` in `bootstrap/app.php` and an explicit `https://` `APP_URL` in
-  `render.yaml`. Documented the symptom/fix in `docs/STAGING.md` for next time.
+- Fixed a mixed-content bug on the (since-retired, see the entry above) staging preview — a PaaS
+  host terminating TLS at its edge and forwarding plain HTTP confused Laravel into generating
+  `http://` asset links on an `https://` page. Fix (`trustProxies(at: '*')` in `bootstrap/app.php`
+  + an explicit `https://` `APP_URL`) is host-agnostic and still applies to Laravel Cloud.
 - Decided to keep Phase 3's NIRA/OTP/SchoolPay integrations as placeholder fakes for now while
   real API credentials are sourced — no code change, just confirming the existing stub approach
   from Phase 0 stands until then.
@@ -86,8 +99,8 @@ Running log of what's been built, in plain language. Newest first.
   `AssessmentTest` expected `raw_score` back as the string `"25.00"` but got the integer `25`.
   Cause: `AssessmentScore` had no cast on its `decimal(6,2)` columns, so the value round-trips
   differently depending on DB driver — MySQL returns decimal columns as strings, SQLite (used by
-  `phpunit.xml` for tests, and by the Render staging deploy in production) doesn't enforce the
-  declared precision and hands back whatever numeric type it stored. Added `decimal:2` casts so
+  `phpunit.xml` for tests) doesn't enforce the declared precision and hands back whatever numeric
+  type it stored. Added `decimal:2` casts so
   the value is consistent regardless of driver, then audited every other undecorated `decimal()`
   column for the same gap: `Payment.amount`, `Invoice.amount_due`, and all four `Payslip` money
   columns (`gross_pay`, `paye`, `nssf`, `net_pay`) had the identical latent bug, just not yet
@@ -95,9 +108,6 @@ Running log of what's been built, in plain language. Newest first.
 
 ## 2026-08-21
 
-- Fixed the Render staging build (`libsqlite3-dev` was missing for `pdo_sqlite`'s headers) —
-  committed; still needs a `git push` from a normal terminal since this sandboxed session can't
-  complete GitHub's interactive credential prompt.
 - Built out Phase 1 and Phase 2 from `docs/ROADMAP.md` in one pass, on top of the Phase 0
   read-only scaffold:
   - **Academics**: real marksheet entry (`AssessmentController`/`AssessmentScoreController`) with

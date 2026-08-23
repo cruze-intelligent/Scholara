@@ -38,6 +38,24 @@
                         {{ __('Issue Reports') }}
                     </x-nav-link>
 
+                    @hasanyrole(['bursar', 'admin'])
+                        <x-nav-link :href="route('invoices.index')" :active="request()->routeIs('invoices.*')">
+                            {{ __('Invoices') }}
+                        </x-nav-link>
+                    @endhasanyrole
+
+                    @hasrole('learner')
+                        <x-nav-link :href="route('learner.assessments')" :active="request()->routeIs('learner.assessments')">
+                            {{ __('My Assessments') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('learner.attendance')" :active="request()->routeIs('learner.attendance')">
+                            {{ __('My Attendance') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('learner.notices')" :active="request()->routeIs('learner.notices')">
+                            {{ __('Noticeboard') }}
+                        </x-nav-link>
+                    @endhasrole
+
                     @hasanyrole(['nurse', 'admin'])
                         <x-nav-link :href="route('medications.index')" :active="request()->routeIs('medications.*')">
                             {{ __('eMAR') }}
@@ -127,6 +145,16 @@
             @endhasanyrole
 
             <x-responsive-nav-link :href="route('incidents.index')">{{ __('Issue Reports') }}</x-responsive-nav-link>
+
+            @hasanyrole(['bursar', 'admin'])
+                <x-responsive-nav-link :href="route('invoices.index')">{{ __('Invoices') }}</x-responsive-nav-link>
+            @endhasanyrole
+
+            @hasrole('learner')
+                <x-responsive-nav-link :href="route('learner.assessments')">{{ __('My Assessments') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('learner.attendance')">{{ __('My Attendance') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('learner.notices')">{{ __('Noticeboard') }}</x-responsive-nav-link>
+            @endhasrole
 
             @hasanyrole(['nurse', 'admin'])
                 <x-responsive-nav-link :href="route('medications.index')">{{ __('eMAR') }}</x-responsive-nav-link>

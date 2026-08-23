@@ -8,7 +8,12 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <h3 class="font-semibold text-gray-800 mb-4">My scores</h3>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold text-gray-800">My scores</h3>
+                    <a href="{{ route('learner.assessments') }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                        View all &rarr;
+                    </a>
+                </div>
                 @forelse (optional($student)->assessmentScores ?? [] as $score)
                     <div class="border-b border-gray-100 py-2 last:border-0 flex justify-between text-sm">
                         <span>{{ $score->assessment->subject->name }} &mdash; {{ $score->assessment->type }}</span>
@@ -30,7 +35,17 @@
             </div>
 
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <h3 class="font-semibold text-gray-800 mb-4">Noticeboard</h3>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold text-gray-800">Noticeboard</h3>
+                    <div class="flex gap-4">
+                        <a href="{{ route('learner.attendance') }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                            My attendance
+                        </a>
+                        <a href="{{ route('learner.notices') }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                            View all &rarr;
+                        </a>
+                    </div>
+                </div>
                 @forelse ($notices as $notice)
                     <div class="border-b border-gray-100 py-2 last:border-0">
                         <p class="font-medium">{{ $notice->title }}</p>

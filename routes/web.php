@@ -11,7 +11,9 @@ use App\Http\Controllers\HealthRecordController;
 use App\Http\Controllers\IncidentReportController;
 use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\InventoryTransactionController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoicePaymentController;
+use App\Http\Controllers\LearnerController;
 use App\Http\Controllers\MedicationAdministrationController;
 use App\Http\Controllers\MilestoneChecklistController;
 use App\Http\Controllers\NoticeController;
@@ -66,6 +68,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('invoices.pay.status');
         Route::get('invoices/{invoice}/payments/{payment}/check', [InvoicePaymentController::class, 'statusCheck'])
             ->name('invoices.pay.status-check');
+    });
+
+    // Financial center — bursar manages invoices and records cash/bank payments; card/mobile
+    // money is the guardian's own self-serve checkout above.
+    Route::middleware('role:bursar|admin')->group(function () {
+        Route::resource('invoices', InvoiceController::class)->only(['index', 'create', 'store', 'show']);
+        Route::post('invoices/{invoice}/payments', [InvoiceController::class, 'recordPayment'])
+            ->name('invoices.record-payment');
+    });
+
+    // Learner's own full-depth views — the dashboard only shows a five-item summary of each.
+    Route::middleware('role:learner')->group(function () {
+        Route::get('my/assessments', [LearnerController::class, 'assessments'])->name('learner.assessments');
+        Route::get('my/attendance', [LearnerController::class, 'attendance'])->name('learner.attendance');
+        Route::get('my/notices', [LearnerController::class, 'notices'])->name('learner.notices');
     });
 
     // Noticeboard — admin/teacher author, everyone reads via the dashboard.

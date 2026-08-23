@@ -53,7 +53,7 @@ integration surface for both mobile money and card rather than several.
   is bound to `DGatewayPaymentGateway` only when `DGATEWAY_API_KEY` is set
   (`AppServiceProvider::register`); until then it auto-falls-back to `FakePaymentGateway`, same
   swappable-fake pattern as `NiraVerifier`/`OtpSender`. No code change needed to go live later —
-  just set the env vars in `.env`/Render's dashboard. Get keys/secret from
+  just set the env vars in `.env`/Laravel Cloud's dashboard. Get keys/secret from
   `https://dgatewayadmin.desispay.com` → My Apps → your app.
 - **Amount/currency**: fees are charged in whole UGX (DGateway amounts are integers in the
   smallest currency unit; UGX has no minor unit, so `amount` is passed as-is, not ×100). Currency

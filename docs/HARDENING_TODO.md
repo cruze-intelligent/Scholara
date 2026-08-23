@@ -87,16 +87,23 @@ number and changelog link) was confusing for a real product to land on.
       just a 200 status — it would have caught a syntax bug I introduced and fixed in the same
       pass (unescaped apostrophes inside a single-quoted PHP string)
 
-## Phase 2 — Give bursar and learner a real area
+## Phase 2 — Give bursar and learner a real area — done 2026-08-23
 
-Both currently have **zero routes** gated to them — dashboard-only.
+Both had **zero routes** gated to them before this — dashboard-only.
 
-- [ ] Bursar: create invoices (currently invoices only exist via seeder), record a manual payment
-      (cash/bank — the two `Payment.method` enum values with no UI path today), view payment
-      history/reconciliation view
-- [ ] Learner: view own full assessment history (not just dashboard summary), own attendance
-      record, notice archive (not just latest 5)
-- [ ] Feature tests for both
+- [x] Bursar: `InvoiceController` — create invoices (previously only ever existed via the seeder),
+      a `show` page listing payments against one invoice, and `recordPayment` for the two
+      `Payment.method` values with no UI path before (cash/bank) — completes immediately since the
+      bursar is confirming money already in hand, unlike the guardian DGateway checkout which
+      starts "pending." `Invoice`/`Payment` have no `BelongsToSchool` scope of their own (tied to
+      a school only via `student_id`), so every query filters through the student relation
+      explicitly — same pattern as the Phase 0 medication/clinic-visit fixes.
+- [x] Learner: `LearnerController` — full assessment-score history, full attendance history
+      (paginated), and a full notice archive (paginated), vs. the dashboard's five-item summaries
+- [x] Feature tests: `InvoiceManagementTest`, `LearnerPortalTest` — caught one real bug along the
+      way (`InvoiceController::show`/`recordPayment` crashed 500 instead of returning 403 for a
+      cross-school invoice, because `$invoice->student` itself comes back `null` — `Student`'s own
+      `BelongsToSchool` scope already filters it out before the explicit school check ever runs)
 
 ## Phase 3 — CRUD depth across every module
 
