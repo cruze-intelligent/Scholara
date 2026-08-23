@@ -4,12 +4,16 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{{ config('app.name', 'Scholara') }} — School management, all in one place</title>
+        <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-gray-50 text-gray-800 antialiased">
         <header class="border-b border-gray-100 bg-white">
             <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-                <span class="font-semibold text-xl tracking-tight text-gray-900">Scholara</span>
+                <span class="flex items-center gap-2">
+                    <x-application-logo class="h-8 w-8" />
+                    <span class="font-semibold text-xl tracking-tight text-gray-900">Scholara</span>
+                </span>
                 @auth
                     <a href="{{ route('dashboard') }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
                         Go to dashboard &rarr;
@@ -48,11 +52,7 @@
                         ['Admin', 'Runs the whole school: creates and manages every account, oversees discipline and strategy, sees every module.'],
                         ['Teacher', 'Marksheets, lesson plans, attendance, notices, and health-alert logging for their own classes.'],
                         ['Parent', 'One account for every child they have at the school — academics, fees, attendance, and health, all in one view.'],
-                        ['Learner', 'Their own scores, the noticeboard, learning resources, and a way to report an issue.'],
-                        ['Nurse', 'Health records, medication administration with Five Rights checks, and clinic visit logs.'],
-                        ['HR', 'Staff profiles, payroll periods, and PAYE/NSSF deductions.'],
-                        ['Bursar', 'Invoices and fee reconciliation — payment itself is guardian self-serve, by card or mobile money.'],
-                        ['Librarian', 'Library, canteen, and equipment stock — what is in, what is out, what is running low.'],
+                        ['Learner', 'Their own scores, the noticeboard, and a way to report an issue.'],
                     ] as [$role, $description])
                         <div class="bg-white border border-gray-100 rounded-lg p-5">
                             <p class="font-semibold text-gray-900">{{ $role }}</p>
@@ -60,6 +60,10 @@
                         </div>
                     @endforeach
                 </div>
+                <p class="text-sm text-gray-400 mt-6">
+                    Plus dedicated tools for nurses, HR, bursars, and librarians once your school
+                    administrator sets up your account.
+                </p>
             </section>
         </main>
 

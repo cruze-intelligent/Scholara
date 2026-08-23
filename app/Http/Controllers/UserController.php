@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -142,6 +143,9 @@ class UserController extends Controller
             'new_child_gender' => ['nullable', 'in:male,female'],
             'new_child_curriculum_level' => ['required_with:new_child_first_name', 'nullable', 'in:nursery,primary,lower_secondary,upper_secondary'],
             'new_child_school_class_id' => ['nullable', Rule::exists('school_classes', 'id')->where('school_id', $request->user()->school_id)],
+            // Admin-uploaded at creation time; a parent can add/replace it later via
+            // StudentPhotoController for their own child specifically.
+            'new_child_photo' => ['nullable', 'image', 'max:4096'],
 
             // learner
             'learner_student_id' => [
@@ -149,9 +153,10 @@ class UserController extends Controller
                 Rule::exists('students', 'id')->where('school_id', $request->user()->school_id),
             ],
 
-            // staff
+            // staff — photo is admin-only, there's no parent-equivalent upload path for it
             'trn' => ['nullable', 'string', 'max:20'],
             'role_title' => ['nullable', 'string', 'max:100'],
+            'photo' => ['nullable', 'image', 'max:4096'],
             'hire_date' => ['nullable', 'date'],
             'monthly_gross_salary' => ['nullable', 'numeric', 'min:0'],
         ]);
@@ -193,6 +198,9 @@ class UserController extends Controller
                     // secondary) keeps a student out of modules that don't apply to them (e.g. a
                     // primary learner showing up in nursery daily-log/milestone screens).
                     'curriculum_level' => $validated['new_child_curriculum_level'],
+                    'photo_path' => isset($validated['new_child_photo'])
+                        ? $validated['new_child_photo']->store('photos/students', 'public')
+                        : null,
                 ]);
 
                 $childIds[] = $child->id;
@@ -209,6 +217,16 @@ class UserController extends Controller
         }
 
         if (in_array($validated['role'], self::STAFF_ROLES, true)) {
+            $staffProfile = $user->staffProfile;
+
+            if (isset($validated['photo'])) {
+                if ($staffProfile?->photo_path) {
+                    Storage::disk('public')->delete($staffProfile->photo_path);
+                }
+
+                $photoPath = $validated['photo']->store('photos/staff', 'public');
+            }
+
             StaffProfile::updateOrCreate(
                 ['user_id' => $user->id],
                 [
@@ -216,6 +234,8 @@ class UserController extends Controller
                     'role_title' => $validated['role_title'] ?? ucfirst($validated['role']),
                     'hire_date' => $validated['hire_date'] ?? now(),
                     'monthly_gross_salary' => $validated['monthly_gross_salary'] ?? null,
+                    // Keep the existing photo when no new one is uploaded on an edit.
+                    ...(isset($photoPath) ? ['photo_path' => $photoPath] : []),
                 ]
             );
         }

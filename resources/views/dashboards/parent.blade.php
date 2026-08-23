@@ -9,7 +9,26 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
             @forelse ($students as $student)
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                    <h3 class="font-semibold text-gray-800 mb-4">{{ $student->full_name }}</h3>
+                    <div class="flex items-center gap-4 mb-4">
+                        @if ($student->photo_url)
+                            <img src="{{ $student->photo_url }}" alt="" class="h-14 w-14 rounded-full object-cover">
+                        @else
+                            <div class="h-14 w-14 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-semibold">
+                                {{ collect(explode(' ', $student->full_name))->map(fn ($n) => $n[0] ?? '')->take(2)->implode('') }}
+                            </div>
+                        @endif
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-gray-800">{{ $student->full_name }}</h3>
+                            <form method="POST" action="{{ route('students.photo.update', $student) }}" enctype="multipart/form-data"
+                                class="flex items-center gap-2 mt-1">
+                                @csrf
+                                <label class="text-xs font-medium text-indigo-600 hover:text-indigo-800 cursor-pointer">
+                                    {{ $student->photo_url ? 'Change photo' : 'Add photo' }}
+                                    <input type="file" name="photo" accept="image/*" class="hidden" onchange="this.form.submit()">
+                                </label>
+                            </form>
+                        </div>
+                    </div>
 
                     <p class="text-sm text-gray-500 mb-2">Recent assessment scores</p>
                     @forelse ($student->assessmentScores->take(5) as $score)

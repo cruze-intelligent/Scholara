@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Storage;
 
 class Student extends Model
 {
@@ -16,7 +17,7 @@ class Student extends Model
 
     protected $fillable = [
         'school_id', 'user_id', 'school_class_id', 'admission_no', 'first_name',
-        'last_name', 'dob', 'gender', 'curriculum_level',
+        'last_name', 'dob', 'gender', 'curriculum_level', 'photo_path',
     ];
 
     protected $casts = [
@@ -101,5 +102,10 @@ class Student extends Model
     public function getFullNameAttribute(): string
     {
         return trim("{$this->first_name} {$this->last_name}");
+    }
+
+    public function getPhotoUrlAttribute(): ?string
+    {
+        return $this->photo_path ? Storage::disk('public')->url($this->photo_path) : null;
     }
 }

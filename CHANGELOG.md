@@ -2,6 +2,24 @@
 
 Running log of what's been built, in plain language. Newest first.
 
+## 2026-08-23 (6)
+
+- Fixed real nav overflow: the desktop/mobile breakpoint switched at 640px, too early for the
+  12 items admin can now see. Raised to 1280px and grouped Academics/Health into dropdown menus
+  instead of just widening — a flat 9+ item row wasn't "clear and easy to follow" either way.
+- Trimmed the landing page's role grid to Admin/Teacher/Parent/Learner — Nurse/HR/Bursar/
+  Librarian read as an internal staff directory on a public page, not a product pitch.
+- Schools can now declare which curriculum levels they actually run (`School.settings.levels`,
+  no migration needed — reused the existing JSON column) via a new admin-only School Settings
+  page, gating level-specific nav (Nursery, so far) for schools that don't offer it.
+- Added photo uploads for students and staff: admin can upload for anyone at their school,
+  parents only for their own children. Staff photos stay admin-only. Known gap: uploads go to
+  the local disk, which won't survive a Laravel Cloud redeploy — needs S3 before this is
+  production-real, same category of "needs real credentials" gap as DGateway/NIRA/OTP.
+- Implemented the logo: the "Open Book, Networked" concept from the earlier design pass now
+  replaces the default Breeze mark everywhere, plus a matching favicon.
+- 82/82 tests passing.
+
 ## 2026-08-23 (5)
 
 - Phase 2 of the hardening/depth pass (`docs/HARDENING_TODO.md`): bursar and learner both had

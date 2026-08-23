@@ -6,7 +6,7 @@
     <div class="py-12">
         <div class="max-w-2xl mx-auto sm:px-6 lg:px-8 space-y-6">
             <x-card>
-                <form method="POST" action="{{ route('users.update', $targetUser) }}"
+                <form method="POST" action="{{ route('users.update', $targetUser) }}" enctype="multipart/form-data"
                     x-data="{ role: '{{ old('role', $targetUser->roles->first()?->name ?? '') }}' }" class="space-y-4">
                     @csrf
                     @method('PUT')
@@ -60,6 +60,7 @@
                             :options="['nursery' => 'Nursery', 'primary' => 'Primary', 'lower_secondary' => 'Lower Secondary', 'upper_secondary' => 'Upper Secondary']" />
                         <x-form.select name="new_child_school_class_id" label="Class"
                             :options="$classes->pluck('name', 'id')" />
+                        <x-form.input name="new_child_photo" label="Photo for the new child (optional)" type="file" accept="image/*" />
                     </div>
 
                     <div x-show="role === 'learner'" x-cloak class="border-t border-gray-100 pt-4">
@@ -75,6 +76,13 @@
                             :value="$targetUser->staffProfile?->hire_date?->toDateString()" />
                         <x-form.input name="monthly_gross_salary" label="Monthly gross salary" type="number"
                             :value="$targetUser->staffProfile?->monthly_gross_salary" />
+                        @if ($targetUser->staffProfile?->photo_url)
+                            <div class="col-span-2 flex items-center gap-3">
+                                <img src="{{ $targetUser->staffProfile->photo_url }}" alt="" class="h-12 w-12 rounded-full object-cover">
+                                <span class="text-sm text-gray-500">Current photo — upload a new one to replace it.</span>
+                            </div>
+                        @endif
+                        <x-form.input name="photo" label="ID photo (optional)" type="file" accept="image/*" class="col-span-2" />
                     </div>
 
                     <x-primary-button type="submit">{{ __('Save changes') }}</x-primary-button>

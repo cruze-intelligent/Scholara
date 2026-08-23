@@ -6,7 +6,8 @@
     <div class="py-12">
         <div class="max-w-2xl mx-auto sm:px-6 lg:px-8 space-y-6">
             <x-card>
-                <form method="POST" action="{{ route('users.store') }}" x-data="{ role: '{{ old('role', '') }}' }" class="space-y-4">
+                <form method="POST" action="{{ route('users.store') }}" enctype="multipart/form-data"
+                    x-data="{ role: '{{ old('role', '') }}' }" class="space-y-4">
                     @csrf
 
                     <x-form.input name="name" label="Full name" />
@@ -62,6 +63,7 @@
                         </p>
                         <x-form.select name="new_child_school_class_id" label="Class"
                             :options="$classes->pluck('name', 'id')" />
+                        <x-form.input name="new_child_photo" label="Photo (optional)" type="file" accept="image/*" />
                     </div>
 
                     {{-- Learner: link to their own existing student record --}}
@@ -81,6 +83,7 @@
                         <x-form.input name="role_title" label="Job title" />
                         <x-form.input name="hire_date" label="Hire date" type="date" />
                         <x-form.input name="monthly_gross_salary" label="Monthly gross salary" type="number" />
+                        <x-form.input name="photo" label="ID photo (optional)" type="file" accept="image/*" />
                     </div>
 
                     <x-primary-button type="submit">{{ __('Create user') }}</x-primary-button>

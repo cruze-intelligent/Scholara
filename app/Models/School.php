@@ -40,4 +40,25 @@ class School extends Model
     {
         return $this->hasMany(Notice::class);
     }
+
+    /**
+     * @return array<int, string>
+     */
+    public function levels(): array
+    {
+        return $this->settings['levels'] ?? [];
+    }
+
+    /**
+     * Whether this school offers the given curriculum level (nursery/primary/lower_secondary/
+     * upper_secondary) — gates level-specific modules (e.g. Nursery daily logs) out of the nav
+     * for schools that don't run that level. An unconfigured school (no admin has set this yet)
+     * offers every level, so nothing disappears before an admin has had a chance to configure it.
+     */
+    public function offersLevel(string $level): bool
+    {
+        $levels = $this->levels();
+
+        return $levels === [] || in_array($level, $levels, true);
+    }
 }

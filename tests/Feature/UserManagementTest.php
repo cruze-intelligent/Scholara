@@ -7,6 +7,8 @@ use App\Models\School;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -118,6 +120,39 @@ class UserManagementTest extends TestCase
         $this->assertTrue($user->hasRole('teacher'));
         $this->assertNotNull($user->staffProfile);
         $this->assertEquals(900000, $user->staffProfile->monthly_gross_salary);
+    }
+
+    public function test_admin_can_upload_a_staff_photo_and_a_new_childs_photo(): void
+    {
+        Storage::fake('public');
+        Role::findOrCreate('teacher');
+        Role::findOrCreate('parent');
+        [$admin] = $this->makeAdmin();
+
+        $this->actingAs($admin)->post(route('users.store'), [
+            'name' => 'Mr Teacher',
+            'email' => 'teacher3@example.com',
+            'role' => 'teacher',
+            'photo' => UploadedFile::fake()->image('staff.jpg'),
+        ]);
+
+        $staffUser = User::where('email', 'teacher3@example.com')->firstOrFail();
+        $this->assertNotNull($staffUser->staffProfile->photo_path);
+
+        $this->actingAs($admin)->post(route('users.store'), [
+            'name' => 'Jane Parent',
+            'email' => 'jane2@example.com',
+            'role' => 'parent',
+            'relationship_to_student' => 'mother',
+            'new_child_first_name' => 'Baby',
+            'new_child_last_name' => 'Two',
+            'new_child_gender' => 'female',
+            'new_child_curriculum_level' => 'primary',
+            'new_child_photo' => UploadedFile::fake()->image('child.jpg'),
+        ]);
+
+        $child = Student::where('first_name', 'Baby')->where('last_name', 'Two')->firstOrFail();
+        $this->assertNotNull($child->photo_path);
     }
 
     public function test_deactivated_user_cannot_log_in(): void

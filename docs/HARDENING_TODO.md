@@ -105,6 +105,48 @@ Both had **zero routes** gated to them before this — dashboard-only.
       cross-school invoice, because `$invoice->student` itself comes back `null` — `Student`'s own
       `BelongsToSchool` scope already filters it out before the explicit school check ever runs)
 
+## Phase 2.5 — Nav polish, school levels, photo uploads, logo — done 2026-08-23
+
+Not in the original plan — mid-build feedback after Phase 2 landed.
+
+- [x] **Nav overflow fix**: the desktop nav switched from hamburger to a flat link row at 640px
+      (`sm:`), which by this point had grown to as many as 12 items for admin — neither the
+      hamburger nor the full row fit cleanly on tablet/small-laptop widths. Raised the breakpoint
+      to `xl:` (1280px) and grouped the two 2-3-item clusters (Academics, Health) into dropdown
+      menus (`<x-nav-dropdown>`, new component reusing the existing `<x-dropdown>`) rather than
+      just widening — a flat 9+ item row still wouldn't have been "clear and easy to follow"
+      even if it technically fit.
+- [x] **Landing page trim**: cut Nurse/HR/Bursar/Librarian from the public role grid — internal
+      operational roles read as an internal staff directory, not a product page. Kept
+      Admin/Teacher/Parent/Learner, with a one-line footnote that the other roles exist once an
+      admin sets up an account.
+- [x] **School-configurable curriculum levels**: `School.settings` (existing JSON column, no
+      migration needed) now optionally holds `levels` — which of nursery/primary/lower_secondary/
+      upper_secondary the school actually runs. `School::offersLevel()` gates level-specific nav
+      items (currently just Nursery) so a primary-only school doesn't see modules that don't apply
+      to it. Admin-editable anytime via a new `SchoolSettingsController`/`/school-settings` page —
+      **not** tied to the public self-registration flow, since that flow is de-emphasized/unused in
+      this app's one-school-per-deployment model (see the Phase 1.5 landing-page note above). An
+      unconfigured school offers every level by default, so nothing disappears before an admin has
+      set this.
+- [x] **Photo uploads**: `photo_path` added to `students` and `staff_profiles`.
+      `StudentPhotoController` — admin can upload for any student at their school, a parent only
+      for their own guardian-linked children (checked in the controller, not just route middleware
+      — same ownership-check pattern used everywhere else). Staff photos are admin-only, wired
+      into `UserController`'s existing create/edit flow (no parent-equivalent for staff). Ran
+      `php artisan storage:link` for local dev.
+      **Known gap, not fixed here**: uploads go to the local `public` disk, which is fine for local
+      dev but ephemeral on Laravel Cloud (and was Render's exact SQLite problem before it — see
+      `docs/STAGING.md`) — photos would vanish on the next deploy in production. Needs an S3-
+      compatible disk before this is production-real; deferred since it needs real cloud storage
+      credentials, same category of gap as the DGateway/NIRA/OTP stubs.
+- [x] **Logo implemented**: the "Open Book, Networked" concept from the earlier design pass
+      (`https://claude.ai/code/artifact/744fa4a2-4d9f-440d-8c02-7a2ec0e9ef34`) replaces the default
+      Breeze mark in `application-logo.blade.php`, plus a matching `public/favicon.svg` wired into
+      all three page `<head>`s (main app layout, guest/auth layout, landing page).
+- [x] Feature tests: `SchoolSettingsTest`, `StudentPhotoTest`, plus two new cases in
+      `UserManagementTest` for staff/new-child photo upload. 82/82 passing.
+
 ## Phase 3 — CRUD depth across every module
 
 Per the audit: every module tops out at `index`/`create`/`store` (routes explicitly

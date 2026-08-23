@@ -19,6 +19,8 @@ use App\Http\Controllers\MilestoneChecklistController;
 use App\Http\Controllers\NoticeController;
 use App\Http\Controllers\PayrollRunController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SchoolSettingsController;
+use App\Http\Controllers\StudentPhotoController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WowMomentController;
 use Illuminate\Support\Facades\Route;
@@ -46,6 +48,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('role:admin')->group(function () {
         Route::resource('users', UserController::class)->only(['index', 'create', 'store', 'edit', 'update']);
         Route::patch('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggle-active');
+        Route::get('school-settings', [SchoolSettingsController::class, 'edit'])->name('school-settings.edit');
+        Route::put('school-settings', [SchoolSettingsController::class, 'update'])->name('school-settings.update');
+    });
+
+    // Student photo — admin (any student, own school) or a parent (their own children only);
+    // ownership is checked inside the controller since the two roles have different scopes.
+    Route::middleware('role:admin|parent')->group(function () {
+        Route::post('students/{student}/photo', [StudentPhotoController::class, 'update'])->name('students.photo.update');
     });
 
     // Academics — teachers create/mark; admins can also view assessments.
