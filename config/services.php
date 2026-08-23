@@ -35,4 +35,14 @@ return [
         ],
     ],
 
+    // See docs/DECISIONS.md — unified card + mobile money gateway for the Financial Center.
+    // AppServiceProvider only binds the real DGatewayPaymentGateway when 'key' is set; until
+    // then, FakePaymentGateway keeps the checkout flow working end-to-end with no real charges.
+    'dgateway' => [
+        'api_url' => env('DGATEWAY_API_URL', 'https://dgatewayapi.desispay.com'),
+        'key' => env('DGATEWAY_API_KEY'),
+        'webhook_secret' => env('DGATEWAY_WEBHOOK_SECRET'),
+        'default_currency' => env('DGATEWAY_DEFAULT_CURRENCY', 'UGX'),
+    ],
+
 ];

@@ -45,9 +45,15 @@
 
 ## Phase 3 — Integrations (needs external accounts)
 
+- [x] Card + mobile money payments for the Financial Center — started 2026-08-23, via
+      [DGateway](https://dgateway.desispay.com) rather than SchoolPay directly (see
+      docs/DECISIONS.md for why). Guardian-initiated checkout, webhook + status-poll
+      confirmation, `Invoice`/`Payment` status kept in sync. Bound behind `FakePaymentGateway`
+      until a real `DGATEWAY_API_KEY` exists — placeholder mode, no account signed up yet.
+      Follow-ups: card checkout doesn't load Stripe.js yet (mobile money is the complete path),
+      and the UGX-via-Stripe currency assumption is unverified against a real account.
 - Real SMS/USSD OTP via an SMS gateway.
 - Real NIRA TPI integration (needs TPI credentials + PDPO registration in place first).
-- SchoolPay / MTN & Airtel mobile money integration for the Financial Center.
 - Push notifications / SMS alerts for gate pass, arrival/departure.
 
 ## Phase 4 — Offline-first edge layer

@@ -2,6 +2,47 @@
 
 Running log of what's been built, in plain language. Newest first.
 
+## 2026-08-23 (2)
+
+- Built the Financial Center's actual payment collection — previously `PaymentGateway` was a
+  dead interface nothing called. Chose [DGateway](https://dgateway.desispay.com) (mobile money +
+  card behind one API) over integrating SchoolPay/MTN/Airtel/Stripe separately — see
+  `docs/DECISIONS.md`. No DGateway account exists yet, so it's wired end-to-end but bound behind
+  `FakePaymentGateway` (`AppServiceProvider` auto-switches to the real `DGatewayPaymentGateway`
+  the moment `DGATEWAY_API_KEY` is set — no code change needed later).
+- Redesigned `PaymentGateway` from a synchronous `charge()` that returns success immediately to
+  an async `collect()`/`checkStatus()` pair, matching how real gateways actually work (charge
+  returns "pending", final result arrives via webhook or polling). Added `status`/`provider`/
+  `currency` columns to `payments` and made `paid_at` nullable to support that.
+  `Invoice::syncPaymentStatus()` recomputes unpaid/partially_paid/paid off completed payments.
+- New guardian-facing checkout: pick mobile money or card on `invoices/{invoice}/pay`, then a
+  status page that polls every 5s until the payment resolves. Added a "Pay" link next to unpaid
+  invoices on the parent dashboard, which previously only listed them read-only.
+- New `POST /webhooks/dgateway` — verifies `X-DGateway-Signature` (HMAC-SHA256, constant-time
+  compare) before touching the body, rejects bad/missing signatures with 401, and is idempotent
+  (skips already-resolved payments, since DGateway retries deliveries 2-3 times). Excluded from
+  Laravel's CSRF check in `bootstrap/app.php` since DGateway can't send a session token.
+  Subscription webhook events are ignored on purpose — Scholara charges per-term invoices, not
+  recurring subscriptions, so only the one-time collect flow is implemented.
+- Added `tests/Feature/InvoicePaymentTest.php`: full happy path (guardian pays → webhook
+  confirms → invoice marked paid) against a faked DGateway HTTP response, plus signature
+  rejection and cross-guardian authorization checks.
+- Known gap: the "Card" checkout option calls DGateway but doesn't yet load Stripe.js to confirm
+  the `client_secret` a real card charge would return — untestable without a live account, so
+  mobile money is the only complete path today.
+
+## 2026-08-23
+
+- The Render staging link went live but rendered unstyled — browser console showed "Mixed
+  Content" errors blocking `http://` asset URLs on the `https://` page. Cause: Render terminates
+  TLS at its edge and forwards plain HTTP to the container, and Laravel wasn't told to trust that
+  proxy, so it generated `http://` links even though the page loaded over `https://`. Fixed with
+  `trustProxies(at: '*')` in `bootstrap/app.php` and an explicit `https://` `APP_URL` in
+  `render.yaml`. Documented the symptom/fix in `docs/STAGING.md` for next time.
+- Decided to keep Phase 3's NIRA/OTP/SchoolPay integrations as placeholder fakes for now while
+  real API credentials are sourced — no code change, just confirming the existing stub approach
+  from Phase 0 stands until then.
+
 ## 2026-08-22
 
 - Verified the Aug 21 Phase 1/2 work end-to-end for the first time, as flagged as outstanding

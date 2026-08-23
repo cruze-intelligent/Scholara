@@ -6,10 +6,12 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\ClinicVisitController;
 use App\Http\Controllers\DailyActivityLogController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DGatewayWebhookController;
 use App\Http\Controllers\HealthRecordController;
 use App\Http\Controllers\IncidentReportController;
 use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\InventoryTransactionController;
+use App\Http\Controllers\InvoicePaymentController;
 use App\Http\Controllers\MedicationAdministrationController;
 use App\Http\Controllers\MilestoneChecklistController;
 use App\Http\Controllers\NoticeController;
@@ -25,6 +27,10 @@ Route::get('/', function () {
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
+
+// DGateway calls this directly, unauthenticated — verified by HMAC signature inside the
+// controller instead of Laravel auth, and excluded from CSRF in bootstrap/app.php.
+Route::post('/webhooks/dgateway', [DGatewayWebhookController::class, 'handle'])->name('webhooks.dgateway');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -42,6 +48,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('attendance', [AttendanceController::class, 'create'])->name('attendance.create');
         Route::post('attendance', [AttendanceController::class, 'store'])->name('attendance.store');
         Route::get('attendance/stats', [AttendanceController::class, 'stats'])->name('attendance.stats');
+    });
+
+    // Fee payments — guardian self-serve checkout (card or mobile money via DGateway).
+    // Ownership of the invoice's student is checked in the controller, not just the role.
+    Route::middleware('role:parent')->group(function () {
+        Route::get('invoices/{invoice}/pay', [InvoicePaymentController::class, 'create'])->name('invoices.pay');
+        Route::post('invoices/{invoice}/pay', [InvoicePaymentController::class, 'store'])->name('invoices.pay.store');
+        Route::get('invoices/{invoice}/payments/{payment}', [InvoicePaymentController::class, 'status'])
+            ->name('invoices.pay.status');
+        Route::get('invoices/{invoice}/payments/{payment}/check', [InvoicePaymentController::class, 'statusCheck'])
+            ->name('invoices.pay.status-check');
     });
 
     // Noticeboard — admin/teacher author, everyone reads via the dashboard.

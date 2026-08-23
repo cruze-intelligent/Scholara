@@ -40,6 +40,44 @@ mandatory external-reporting step or SLA timers).
 (all recorded dates), with a simple flag when the gap between genders is ≥10 points. See
 `AttendanceController::stats`.
 
+## Payment gateway: DGateway (`app/Services/Payments/`)
+
+`docs/ROADMAP.md`'s Phase 3 named "SchoolPay / MTN & Airtel mobile money integration" without a
+chosen vendor. Adopted [DGateway](https://dgateway.desispay.com) instead — one API that routes
+`currency: "UGX"` to Iotec/Relworx (mobile money) and other currencies to Stripe (card), so the
+parent-facing checkout only shows "Mobile Money" / "Card" and never the gateway name itself, per
+the product ask. Chosen over integrating SchoolPay/MTN/Airtel directly because it's a single
+integration surface for both mobile money and card rather than several.
+
+- **No account exists yet.** The `PaymentGateway` interface `InvoicePaymentController` depends on
+  is bound to `DGatewayPaymentGateway` only when `DGATEWAY_API_KEY` is set
+  (`AppServiceProvider::register`); until then it auto-falls-back to `FakePaymentGateway`, same
+  swappable-fake pattern as `NiraVerifier`/`OtpSender`. No code change needed to go live later —
+  just set the env vars in `.env`/Render's dashboard. Get keys/secret from
+  `https://dgatewayadmin.desispay.com` → My Apps → your app.
+- **Amount/currency**: fees are charged in whole UGX (DGateway amounts are integers in the
+  smallest currency unit; UGX has no minor unit, so `amount` is passed as-is, not ×100). Currency
+  defaults to `UGX` for both mobile money and card (`DGATEWAY_DEFAULT_CURRENCY` — one-line change
+  if card payments should instead be quoted in USD).
+  **Unverified**: whether DGateway's Stripe leg actually accepts UGX-denominated card charges
+  hasn't been tested against a real account — the "135+ currencies via Stripe" the docs mention
+  may or may not include it. Would surface as an `INVALID_CURRENCY` error from DGateway.
+- **No subscriptions.** DGateway supports recurring billing (plans/trial days/grace days), but
+  Scholara's fee model is per-term invoices created by the bursar, not month-to-month
+  subscriptions — so only the one-time `/v1/payments/collect` + status-check flow is wired up.
+  `subscription.*` webhook events are intentionally ignored (`DGatewayWebhookController`).
+- **Status polling endpoint**: DGateway's own reference (`llms.txt`) documents this as
+  `POST /v1/webhooks/verify` with `{"reference": "..."}` — an unusual path for what is really a
+  transaction status check, not a webhook operation, but that's what the live docs say; don't
+  "fix" it to something more intuitive without re-checking the docs first.
+- **Card UI is unfinished.** The checkout screen offers "Card" as an option and will call
+  `/v1/payments/collect`, but doesn't yet load Stripe.js / Stripe Elements to actually confirm the
+  `client_secret` DGateway would return for a real card charge — untestable without a live
+  account. Mobile money is the complete, testable path today.
+- **Guardian-initiated only.** No bursar-recorded/in-person payment flow exists; a parent pays
+  their own child's invoice from their dashboard. `InvoicePaymentController::authorizeGuardian`
+  checks the invoice's student belongs to the acting user's `Guardian`.
+
 ## Audit trail scope
 
 `docs/COMPLIANCE.md` requires an audit log on read/write of health and financial records, but no

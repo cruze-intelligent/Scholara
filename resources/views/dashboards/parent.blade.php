@@ -33,9 +33,16 @@
 
                     <p class="text-sm text-gray-500 mt-4 mb-2">Invoices</p>
                     @forelse ($student->invoices as $invoice)
-                        <div class="border-b border-gray-100 py-2 last:border-0 flex justify-between text-sm">
+                        <div class="border-b border-gray-100 py-2 last:border-0 flex justify-between items-center text-sm">
                             <span>{{ $invoice->term }}</span>
-                            <span>{{ number_format($invoice->amount_due, 0) }} ({{ $invoice->status }})</span>
+                            <span class="flex items-center gap-3">
+                                {{ number_format($invoice->amount_due, 0) }} ({{ $invoice->status }})
+                                @if ($invoice->status !== 'paid')
+                                    <a href="{{ route('invoices.pay', $invoice) }}" class="font-medium text-indigo-600 hover:text-indigo-800">
+                                        {{ __('Pay') }}
+                                    </a>
+                                @endif
+                            </span>
                         </div>
                     @empty
                         <p class="text-gray-500 text-sm">No invoices yet.</p>

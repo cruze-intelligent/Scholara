@@ -26,7 +26,8 @@ NIN + linked students, etc.):
   Identified by a 7-digit TRN.
 - **Nurse** — EHR: medical history, eMAR, clinic visit logs, emergency protocols.
 - **HR/Payroll** — staff profiles, payroll periods, PAYE/NSSF deductions.
-- **Bursar/Accountant** — invoices, fee payments, SchoolPay/mobile money reconciliation.
+- **Bursar/Accountant** — invoices; fee payments are guardian self-serve (card/mobile money via
+  DGateway, see docs/DECISIONS.md), reconciled automatically off the `payments` table.
 - **Librarian/Store** — inventory: library books, canteen/equipment stock.
 - **Admin** — overall access: everything above, plus disciplinary/grievance oversight and
   strategic analytics.
@@ -51,11 +52,11 @@ license, NGO grant) all imply eventually hosting more than one institution.
 | Health/EHR/eMAR | `health_records`, `medication_administrations`, `clinic_visits` | built |
 | HR/Payroll | `staff_profiles`, `payroll_runs`, `payslips` | built |
 | Inventory/store | `inventory_items`, `inventory_transactions` | built |
-| Financial center | `invoices`, `payments` | scaffolded |
+| Financial center | `invoices`, `payments` | built (guardian self-serve checkout via DGateway — see docs/DECISIONS.md; mobile money complete, card UI unfinished) |
 | Predictive analytics | `assessment_scores` (derived) | built (wired into teacher/parent/learner dashboards) |
 | Gate pass / safety | `gate_passes` | scaffolded |
 | Audit trail | `audit_logs` | built (write-side only — see docs/DECISIONS.md) |
-| 2FA / NIRA / SchoolPay | — | **interfaces/stubs only**, see below |
+| 2FA / NIRA | — | **interfaces/stubs only**, see below |
 | Offline-first sync | — | **not built**, see below |
 
 "Scaffolded" = migrations, models, relationships, and a minimal read-only Blade screen exist per
@@ -74,9 +75,6 @@ interface so the rest of the app can be built against it without blocking:
   exist.
 - **SMS/USSD OTP (2FA)** — `App\Services\Notifications\OtpSender` interface, currently logs the
   OTP instead of sending SMS. Swap in an SMS gateway (e.g. Africa's Talking) later.
-- **SchoolPay / mobile money** — `App\Services\Payments\PaymentGateway` interface with a fake
-  "always succeeds" implementation. Real integration needs a SchoolPay/MTN/Airtel merchant
-  account.
 - **Offline-first "School-in-a-Box"** — the plan's Raspberry Pi + SQLite/IndexedDB delta-sync
   layer is a separate edge deployment, not part of this Laravel app. Out of scope until the core
   system is stable; when built, it syncs against the `api.php` routes with a `synced_at` /

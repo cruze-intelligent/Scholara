@@ -78,9 +78,12 @@ update it if a migration ends up shaped differently than what's written here.
 
 ## Financial center
 
-- **invoices** — student_id, term, amount_due, due_date, status.
-- **payments** — invoice_id, amount, method (mobile_money/schoolpay/bank/cash), reference,
-  paid_at, gateway_response (JSON — populated by the stubbed `PaymentGateway` for now).
+- **invoices** — student_id, term, amount_due, due_date, status (unpaid/partially_paid/paid, kept
+  in sync by `Invoice::syncPaymentStatus()` off completed payments).
+- **payments** — invoice_id, amount, currency, method (mobile_money/card/schoolpay/bank/cash),
+  reference, status (pending/completed/failed), provider, paid_at (nullable — set on completion),
+  gateway_response (JSON, populated by `PaymentGateway::collect()`/webhook — see
+  docs/DECISIONS.md for the DGateway integration).
 
 ## Sync (offline-first, phase 4)
 

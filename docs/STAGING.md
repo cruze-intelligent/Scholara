@@ -60,6 +60,14 @@ Render's build log; treat this doc's steps as the intended path, not a guarantee
 - Real integrations (NIRA, SMS/OTP, SchoolPay) are still the fake/stub implementations described
   in `docs/ARCHITECTURE.md` — this only proves the app itself runs and is reachable, not that
   those external integrations work.
+- **If assets load unstyled and the browser console shows "Mixed Content" errors**: Render
+  terminates TLS at its edge and forwards plain HTTP to the container, so without help Laravel
+  thinks every request is HTTP and generates `http://` asset URLs on an `https://` page, which
+  browsers block. Fixed by trusting Render's proxy (`bootstrap/app.php`'s `trustProxies(at: '*')`)
+  and setting `APP_URL` to the `https://` staging URL in `render.yaml`. If you rename the Render
+  service (different URL) and see this again, update `APP_URL` to match and check the Render
+  dashboard's Environment tab — Blueprint YAML env var changes don't always auto-sync onto an
+  already-created service, so you may need to set it there directly too.
 
 ## When the real subdomain is ready
 

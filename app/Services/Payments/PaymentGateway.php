@@ -7,10 +7,19 @@ use App\Models\Invoice;
 interface PaymentGateway
 {
     /**
-     * Charge the given amount against an invoice and return the gateway's
-     * raw response payload.
+     * Start a charge against an invoice via mobile money or card. Real gateways don't settle
+     * synchronously — the caller gets a reference back in "pending" status and learns the final
+     * result via webhook (see DGatewayWebhookController) or by polling checkStatus().
      *
-     * @return array{success: bool, reference: string, raw: array}
+     * @return array{reference: string, status: string, provider: ?string, raw: array}
      */
-    public function charge(Invoice $invoice, float $amount, string $method): array;
+    public function collect(Invoice $invoice, float $amount, string $method, ?string $phoneNumber = null): array;
+
+    /**
+     * Re-check a previously started charge's current status — used as the client-facing poll
+     * target and as a fallback for environments (e.g. local dev) where the webhook can't reach us.
+     *
+     * @return array{status: string, raw: array}
+     */
+    public function checkStatus(string $reference): array;
 }

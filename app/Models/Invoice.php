@@ -24,4 +24,22 @@ class Invoice extends Model
     {
         return $this->hasMany(Payment::class);
     }
+
+    /**
+     * Recompute status from completed payments — called after a DGateway webhook confirms a
+     * charge. Not "paid the moment amount_due is covered and never revisited": a later refund
+     * removing a completed payment would need this called again too, but nothing does that yet.
+     */
+    public function syncPaymentStatus(): void
+    {
+        $paid = $this->payments()->where('status', Payment::STATUS_COMPLETED)->sum('amount');
+
+        $this->update([
+            'status' => match (true) {
+                $paid >= $this->amount_due => 'paid',
+                $paid > 0 => 'partially_paid',
+                default => 'unpaid',
+            },
+        ]);
+    }
 }
