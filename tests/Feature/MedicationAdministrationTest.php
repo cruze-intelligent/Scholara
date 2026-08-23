@@ -68,4 +68,60 @@ class MedicationAdministrationTest extends TestCase
 
         $this->assertFalse(MedicationAdministration::first()->five_rights_checked);
     }
+
+    public function test_nurse_cannot_log_administration_for_a_student_at_another_school(): void
+    {
+        Role::findOrCreate('nurse');
+
+        $school = School::factory()->create();
+        $nurse = User::factory()->create(['school_id' => $school->id]);
+        $nurse->assignRole('nurse');
+
+        $otherSchool = School::factory()->create();
+        $otherStudent = Student::factory()->for($otherSchool)->create();
+
+        $this->actingAs($nurse)->post(route('medications.store'), [
+            'student_id' => $otherStudent->id,
+            'medication_name' => 'Paracetamol',
+            'dose' => '250mg',
+            'route' => 'oral',
+        ])->assertSessionHasErrors('student_id');
+
+        $this->assertSame(0, MedicationAdministration::count());
+    }
+
+    public function test_nurse_only_sees_administrations_from_their_own_school(): void
+    {
+        Role::findOrCreate('nurse');
+
+        $school = School::factory()->create();
+        $nurse = User::factory()->create(['school_id' => $school->id]);
+        $nurse->assignRole('nurse');
+        $ownStudent = Student::factory()->for($school)->create();
+
+        $otherSchool = School::factory()->create();
+        $otherStudent = Student::factory()->for($otherSchool)->create();
+
+        MedicationAdministration::create([
+            'student_id' => $ownStudent->id,
+            'medication_name' => 'Own-school med',
+            'dose' => '1',
+            'route' => 'oral',
+            'administered_by' => $nurse->id,
+            'administered_at' => now(),
+        ]);
+        MedicationAdministration::create([
+            'student_id' => $otherStudent->id,
+            'medication_name' => 'Other-school med',
+            'dose' => '1',
+            'route' => 'oral',
+            'administered_by' => $nurse->id,
+            'administered_at' => now(),
+        ]);
+
+        $response = $this->actingAs($nurse)->get(route('medications.index'));
+
+        $response->assertSee('Own-school med');
+        $response->assertDontSee('Other-school med');
+    }
 }

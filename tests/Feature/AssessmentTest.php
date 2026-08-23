@@ -77,4 +77,36 @@ class AssessmentTest extends TestCase
 
         $this->actingAs($learner)->get(route('assessments.index'))->assertForbidden();
     }
+
+    public function test_admin_sees_every_assessment_at_their_school_not_just_their_own_assignments(): void
+    {
+        Role::findOrCreate('teacher');
+        Role::findOrCreate('admin');
+
+        $school = School::factory()->create();
+        $class = SchoolClass::factory()->for($school)->create();
+        $subject = Subject::factory()->for($school)->create();
+        $teacher = User::factory()->create(['school_id' => $school->id]);
+        $teacher->assignRole('teacher');
+        TeacherSubjectAssignment::create(['teacher_id' => $teacher->id, 'subject_id' => $subject->id, 'school_class_id' => $class->id]);
+
+        \App\Models\Assessment::create([
+            'school_id' => $school->id,
+            'subject_id' => $subject->id,
+            'school_class_id' => $class->id,
+            'type' => 'MOT',
+            'term' => 'Term 2 2026',
+            'max_score' => 50,
+        ]);
+
+        $admin = User::factory()->create(['school_id' => $school->id]);
+        $admin->assignRole('admin');
+
+        // Admin has no teaching assignments of their own — before the fix this returned an
+        // empty list despite being "authorized" via the role:teacher|admin route middleware.
+        $response = $this->actingAs($admin)->get(route('assessments.index'));
+
+        $response->assertOk();
+        $response->assertViewHas('assessments', fn ($assessments) => $assessments->count() === 1);
+    }
 }

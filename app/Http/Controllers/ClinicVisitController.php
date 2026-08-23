@@ -7,13 +7,19 @@ use App\Models\Student;
 use App\Notifications\ClinicVisitLogged;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class ClinicVisitController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        $visits = ClinicVisit::with(['student', 'loggedBy'])->latest('occurred_at')->paginate(20);
+        // ClinicVisit has no school_id of its own (no BelongsToSchool scope), so this has to
+        // filter through the student relation explicitly or it leaks other schools' records.
+        $visits = ClinicVisit::with(['student', 'loggedBy'])
+            ->whereHas('student', fn ($q) => $q->where('school_id', $request->user()->school_id))
+            ->latest('occurred_at')
+            ->paginate(20);
 
         return view('clinic-visits.index', compact('visits'));
     }
@@ -28,7 +34,10 @@ class ClinicVisitController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'student_id' => ['required', 'exists:students,id'],
+            'student_id' => [
+                'required',
+                Rule::exists('students', 'id')->where('school_id', $request->user()->school_id),
+            ],
             'reason' => ['required', 'string', 'max:255'],
             'diagnosis' => ['nullable', 'string'],
             'treatment' => ['nullable', 'string'],

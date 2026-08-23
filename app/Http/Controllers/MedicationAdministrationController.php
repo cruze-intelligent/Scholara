@@ -7,13 +7,18 @@ use App\Models\Student;
 use App\Notifications\MedicationAdministered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class MedicationAdministrationController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        // MedicationAdministration has no school_id of its own (no BelongsToSchool scope), so
+        // this has to filter through the student relation explicitly or it leaks other schools'
+        // records into the list.
         $administrations = MedicationAdministration::with(['student', 'administeredBy'])
+            ->whereHas('student', fn ($q) => $q->where('school_id', $request->user()->school_id))
             ->latest('administered_at')
             ->paginate(20);
 
@@ -30,7 +35,10 @@ class MedicationAdministrationController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'student_id' => ['required', 'exists:students,id'],
+            'student_id' => [
+                'required',
+                Rule::exists('students', 'id')->where('school_id', $request->user()->school_id),
+            ],
             'medication_name' => ['required', 'string', 'max:255'],
             'dose' => ['required', 'string', 'max:100'],
             'route' => ['required', 'string', 'max:100'],

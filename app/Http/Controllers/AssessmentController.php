@@ -12,14 +12,17 @@ class AssessmentController extends Controller
 {
     public function index(Request $request): View
     {
-        $classIds = $request->user()->teacherSubjectAssignments()->pluck('school_class_id');
+        $query = Assessment::with(['subject', 'schoolClass'])->latest();
 
-        $assessments = Assessment::with(['subject', 'schoolClass'])
-            ->whereIn('school_class_id', $classIds)
-            ->latest()
-            ->get();
+        // Admin sees every assessment at their school (Assessment's BelongsToSchool scope
+        // already limits the query to that school); a teacher only has teaching assignments
+        // to filter by, not a school-wide view, so this branch would otherwise show nothing.
+        if (! $request->user()->hasRole('admin')) {
+            $classIds = $request->user()->teacherSubjectAssignments()->pluck('school_class_id');
+            $query->whereIn('school_class_id', $classIds);
+        }
 
-        return view('assessments.index', compact('assessments'));
+        return view('assessments.index', ['assessments' => $query->get()]);
     }
 
     public function create(Request $request): View
