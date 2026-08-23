@@ -65,6 +65,28 @@ were checked against every school, not just the acting user's:
       child inline. Real `Student`/`Guardian` CRUD is still one of the "scaffolded down to nothing"
       gaps noted in Phase 3 — revisit there rather than bolting more onto `UserController`.
 
+## Phase 1.5 — Landing page — done 2026-08-23
+
+Not in the original plan — added mid-build per feedback that the stock Laravel/Breeze splash
+page (`resources/views/welcome.blade.php`: "Let's get started", Laracasts links, a version
+number and changelog link) was confusing for a real product to land on.
+
+- [x] Replaced with a real Scholara landing page: hero + a role card per one of the 8 roles,
+      copy pulled from `docs/ARCHITECTURE.md`'s own role descriptions rather than invented
+      marketing text, single "Log in" CTA
+- [x] Dropped the "Register" link from the login/landing flow (not the route itself, just
+      stopped surfacing it) — now that admin-driven `UserController` exists and always links a
+      role + child/profile, an unlinked self-registered account is a confusing dead end, not a
+      real path into the app
+- [x] Also deleted a large amount of dead weight: the old page's fallback `<style>` block was a
+      hardcoded ~30KB Tailwind v4 stylesheet, left over from `@tailwindcss/vite` being listed in
+      `package.json` as a devDependency but never actually wired into `vite.config.js` — the app
+      genuinely runs Tailwind v3 (see `docs/HARDENING_TODO.md` Phase 6 below). Worth removing that
+      unused package entirely when Phase 6 touches `tailwind.config.js`.
+- [x] Strengthened `ExampleTest` (the existing `GET /` smoke test) to assert real content, not
+      just a 200 status — it would have caught a syntax bug I introduced and fixed in the same
+      pass (unescaped apostrophes inside a single-quoted PHP string)
+
 ## Phase 2 — Give bursar and learner a real area
 
 Both currently have **zero routes** gated to them — dashboard-only.
