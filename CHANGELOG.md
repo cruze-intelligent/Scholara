@@ -2,6 +2,32 @@
 
 Running log of what's been built, in plain language. Newest first.
 
+## 2026-08-24 (2)
+
+- Brought every module up to full CRUD depth (Phase 3) — before this, everything except
+  `ProfileController` topped out at list/create with no way to fix a mistake or remove a bad
+  entry. Added edit/update/destroy, each gated by the specific rule that module needed:
+  Assessments get edit-only (no destroy — an audit trail matters for grades); Notices, Incident
+  reports, Medications, and Clinic visits are editable by their own author/recorder (or admin),
+  with destroy admin-only on the medical ones; Payroll runs lock once approved/paid, editable
+  only while still a draft; Inventory items get a new `show` page (detail + transaction history)
+  and destroy is blocked if the item has any transaction history; Inventory transactions get a
+  `void` action that reverses the quantity effect and soft-voids the row instead of deleting it,
+  so the ledger stays intact; the nursery trio (daily activity logs, milestones, WOW moments) get
+  edit/destroy restricted to the same day's own entries (admin can touch any day).
+- The nursery trio had **zero test coverage at all** before this pass — added
+  `DailyActivityLogTest`, `MilestoneChecklistTest`, `WowMomentTest`, plus a new
+  `InventoryItemTest` (item CRUD had never been tested, only the transaction ledger had).
+- Caught two real `Route::resource` parameter-naming bugs while wiring this up
+  (`ClinicVisitController`, `InventoryItemController`) — Laravel derives the bound route
+  parameter from the kebab-case resource name, not the model class, so both needed
+  `$clinic_visit`/`$inventory_item`, not the camelCase names they were first written with.
+- Caught one real pre-existing bug via the new daily-activity-log test:
+  `DailyActivityLogController` crashed with `Undefined array key "sleep_checks"` whenever that
+  optional field was left out of the request entirely — nullable validation doesn't add missing
+  keys, so the code needed an `empty()` check before reading it, not just a `nullable` rule.
+- 129/129 tests passing.
+
 ## 2026-08-24
 
 - Built the real notification system, pulled forward out of plan order per explicit feedback

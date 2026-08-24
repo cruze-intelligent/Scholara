@@ -109,4 +109,37 @@ class AssessmentTest extends TestCase
         $response->assertOk();
         $response->assertViewHas('assessments', fn ($assessments) => $assessments->count() === 1);
     }
+
+    public function test_teacher_can_correct_a_typod_score_by_resubmitting(): void
+    {
+        Role::findOrCreate('teacher');
+
+        $school = School::factory()->create();
+        $class = SchoolClass::factory()->for($school)->create();
+        $subject = Subject::factory()->for($school)->create();
+        $teacher = User::factory()->create(['school_id' => $school->id]);
+        $teacher->assignRole('teacher');
+        TeacherSubjectAssignment::create(['teacher_id' => $teacher->id, 'subject_id' => $subject->id, 'school_class_id' => $class->id]);
+        $student = Student::factory()->for($school)->create(['school_class_id' => $class->id]);
+
+        $this->actingAs($teacher)->post(route('assessments.store'), [
+            'assignment_id' => TeacherSubjectAssignment::first()->id,
+            'type' => 'MOT',
+            'term' => 'Term 2 2026',
+            'max_score' => 50,
+        ]);
+        $assessment = \App\Models\Assessment::first();
+
+        $this->actingAs($teacher)->post(route('assessments.scores.store', $assessment), [
+            'scores' => [$student->id => 25],
+        ]);
+
+        // Typo: meant 35, entered 25 — same form, same route, resubmitted with the fix.
+        $this->actingAs($teacher)->post(route('assessments.scores.store', $assessment), [
+            'scores' => [$student->id => 35],
+        ]);
+
+        $this->assertSame(1, $assessment->scores()->count());
+        $this->assertSame('35.00', $assessment->scores()->first()->raw_score);
+    }
 }

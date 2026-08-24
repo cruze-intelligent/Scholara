@@ -105,16 +105,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Noticeboard — admin/teacher author, everyone reads via the dashboard.
     Route::middleware('role:admin|teacher')->group(function () {
-        Route::resource('notices', NoticeController::class)->only(['index', 'create', 'store']);
+        Route::resource('notices', NoticeController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
         Route::patch('notices/{notice}/publish', [NoticeController::class, 'publish'])->name('notices.publish');
     });
 
     // Issue reporting — anyone can file/view within their own scope; only
     // staff triage (status/assignment).
-    Route::resource('incidents', IncidentReportController::class)->only(['index', 'create', 'store']);
+    Route::resource('incidents', IncidentReportController::class)->only(['index', 'create', 'store', 'edit', 'update']);
     Route::middleware('role:admin|teacher|nurse')->group(function () {
         Route::patch('incidents/{incident}/status', [IncidentReportController::class, 'updateStatus'])
             ->name('incidents.status');
+    });
+    Route::middleware('role:admin')->group(function () {
+        Route::delete('incidents/{incident}', [IncidentReportController::class, 'destroy'])->name('incidents.destroy');
     });
 
     // Nurse portal
@@ -124,31 +127,38 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('students/{student}/health-record', [HealthRecordController::class, 'update'])
             ->name('health-records.update');
 
-        Route::resource('medications', MedicationAdministrationController::class)->only(['index', 'create', 'store']);
-        Route::resource('clinic-visits', ClinicVisitController::class)->only(['index', 'create', 'store']);
+        Route::resource('medications', MedicationAdministrationController::class)->only(['index', 'create', 'store', 'edit', 'update']);
+        Route::resource('clinic-visits', ClinicVisitController::class)->only(['index', 'create', 'store', 'edit', 'update']);
 
         Route::get('reports/health', [ReportController::class, 'health'])->name('reports.health');
+    });
+    Route::middleware('role:admin')->group(function () {
+        Route::delete('medications/{medication}', [MedicationAdministrationController::class, 'destroy'])->name('medications.destroy');
+        Route::delete('clinic-visits/{clinic_visit}', [ClinicVisitController::class, 'destroy'])->name('clinic-visits.destroy');
     });
 
     // HR / Payroll
     Route::middleware('role:hr|admin')->group(function () {
-        Route::resource('payroll-runs', PayrollRunController::class)->only(['index', 'create', 'store', 'show']);
+        Route::resource('payroll-runs', PayrollRunController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
         Route::post('payroll-runs/{payrollRun}/generate', [PayrollRunController::class, 'generate'])
             ->name('payroll-runs.generate');
     });
 
     // Inventory / store
     Route::middleware('role:librarian|admin')->group(function () {
-        Route::resource('inventory-items', InventoryItemController::class)->only(['index', 'create', 'store']);
+        Route::resource('inventory-items', InventoryItemController::class)
+            ->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
         Route::post('inventory-items/{inventoryItem}/transactions', [InventoryTransactionController::class, 'store'])
             ->name('inventory-items.transactions.store');
+        Route::delete('inventory-items/{inventoryItem}/transactions/{transaction}', [InventoryTransactionController::class, 'void'])
+            ->name('inventory-items.transactions.void');
     });
 
     // Nursery
     Route::middleware('role:teacher|nurse|admin')->group(function () {
-        Route::resource('daily-activity-logs', DailyActivityLogController::class)->only(['index', 'create', 'store']);
-        Route::resource('milestones', MilestoneChecklistController::class)->only(['index', 'create', 'store']);
-        Route::resource('wow-moments', WowMomentController::class)->only(['index', 'create', 'store']);
+        Route::resource('daily-activity-logs', DailyActivityLogController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
+        Route::resource('milestones', MilestoneChecklistController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
+        Route::resource('wow-moments', WowMomentController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
     });
 });
 

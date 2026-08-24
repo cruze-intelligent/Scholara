@@ -239,20 +239,36 @@ and module list view rather than a few spot fixes.
 - [ ] **Not done in this pass**: the module list views beyond empty-states (edit/destroy actions,
       dark theme) are still Phase 3/Phase 6 work, not pulled forward here.
 
-## Phase 3 — CRUD depth across every module
+## Phase 3 — CRUD depth across every module — done 2026-08-24
 
 Per the audit: every module tops out at `index`/`create`/`store` (routes explicitly
-`->only([...])`) — no module except `ProfileController` has real `edit`/`update`/`destroy`.
+`->only([...])`) — no module except `ProfileController` had real `edit`/`update`/`destroy`.
 
-- [ ] Assessments — edit/update (fix a typo'd score), no destroy (audit trail matters for grades)
-- [ ] Notices — edit/update own notice pre-publish, destroy own/any (admin)
-- [ ] Incident reports — edit own before triage starts; destroy admin-only
-- [ ] Medications, clinic visits — edit/update (correct a mis-entered record), destroy admin-only
-- [ ] Payroll runs / payslips — edit before finalized, no destroy once payslips generated
-- [ ] Inventory items — edit/update, destroy (with a check: block if it has transaction history)
-- [ ] Inventory transactions — a void/reverse action (currently no way to undo a stock movement)
-- [ ] Nursery: daily activity logs, milestones, WOW moments — edit/update + destroy own-day entries
-- [ ] Feature tests for every new action above
+- [x] Assessments — edit/update (fix a typo'd score), no destroy (audit trail matters for grades)
+- [x] Notices — edit/update own notice pre-publish, destroy own/any (admin)
+- [x] Incident reports — edit own before triage starts; destroy admin-only
+- [x] Medications, clinic visits — edit/update (correct a mis-entered record), destroy admin-only
+- [x] Payroll runs / payslips — edit/destroy while still `draft`, locked once approved/paid
+- [x] Inventory items — new `show` page (item detail + transaction history), edit/update, destroy
+      blocked (422) if the item has any transaction history
+- [x] Inventory transactions — `void` action reverses the quantity effect and marks `voided_at`
+      (soft-void, row kept for ledger integrity — not a hard delete), guarded against driving
+      stock negative
+- [x] Nursery: daily activity logs, milestones, WOW moments — edit/update + destroy own-day
+      entries only (or admin, any day); previously **zero** test coverage on this trio
+- [x] Feature tests for every action above, including new `InventoryItemTest`,
+      `DailyActivityLogTest`, `MilestoneChecklistTest`, `WowMomentTest`. 129/129 passing.
+- **Two `Route::resource` parameter-naming bugs caught along the way**: Laravel derives the bound
+  route parameter name from the kebab-case *resource* name converted to snake_case singular, not
+  from the model class name — `'clinic-visits'` binds to `$clinic_visit`, `'inventory-items'` to
+  `$inventory_item`. `ClinicVisitController`/`InventoryItemController` were first written with
+  camelCase parameters (`$clinicVisit`/`$inventoryItem`) and 404'd on every route hit until
+  renamed; left as a code comment in both files so it doesn't get re-broken later.
+- **One real pre-existing bug caught by the new `DailyActivityLogTest`**:
+  `DailyActivityLogController::store()`/`update()` read `$validated['meals']`/`['sleep_checks']`
+  directly, which threw `Undefined array key` whenever those nullable fields were simply omitted
+  from the request (nullable validation doesn't add missing keys) — fixed with `! empty(...)`
+  guards before the `explode()`.
 
 ## Phase 4 — Gate passes (build from scratch)
 

@@ -30,20 +30,31 @@
                                     @if ($incident->assignedTo) &middot; assigned to {{ $incident->assignedTo->name }} @endif
                                 </p>
                             </div>
-                            @if (auth()->user()->hasAnyRole(['admin', 'teacher', 'nurse']))
-                                <form method="POST" action="{{ route('incidents.status', $incident) }}" class="flex items-center gap-2">
-                                    @csrf @method('PATCH')
-                                    <select name="status" onchange="this.form.submit()" class="text-xs border-gray-300 rounded-md">
-                                        @foreach (['open', 'in_review', 'resolved'] as $status)
-                                            <option value="{{ $status }}" @selected($incident->status === $status)>{{ ucfirst(str_replace('_', ' ', $status)) }}</option>
-                                        @endforeach
-                                    </select>
-                                </form>
-                            @else
-                                <x-badge :color="$incident->status === 'resolved' ? 'green' : 'yellow'">
-                                    {{ ucfirst(str_replace('_', ' ', $incident->status)) }}
-                                </x-badge>
-                            @endif
+                            <div class="flex flex-col items-end gap-2">
+                                @if (auth()->user()->hasAnyRole(['admin', 'teacher', 'nurse']))
+                                    <form method="POST" action="{{ route('incidents.status', $incident) }}" class="flex items-center gap-2">
+                                        @csrf @method('PATCH')
+                                        <select name="status" onchange="this.form.submit()" class="text-xs border-gray-300 rounded-md">
+                                            @foreach (['open', 'in_review', 'resolved'] as $status)
+                                                <option value="{{ $status }}" @selected($incident->status === $status)>{{ ucfirst(str_replace('_', ' ', $status)) }}</option>
+                                            @endforeach
+                                        </select>
+                                    </form>
+                                @else
+                                    <x-badge :color="$incident->status === 'resolved' ? 'green' : 'yellow'">
+                                        {{ ucfirst(str_replace('_', ' ', $incident->status)) }}
+                                    </x-badge>
+                                @endif
+                                @if ($incident->reporter_id === auth()->id() && $incident->status === 'open')
+                                    <a href="{{ route('incidents.edit', $incident) }}" class="text-xs font-medium text-indigo-600 hover:text-indigo-800">Edit</a>
+                                @endif
+                                @if (auth()->user()->hasRole('admin'))
+                                    <form method="POST" action="{{ route('incidents.destroy', $incident) }}" onsubmit="return confirm('Delete this report?')">
+                                        @csrf @method('DELETE')
+                                        <button class="text-xs font-medium text-red-500 hover:text-red-700">Delete</button>
+                                    </form>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 @empty

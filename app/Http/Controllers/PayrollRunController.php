@@ -44,6 +44,38 @@ class PayrollRunController extends Controller
         return view('payroll-runs.show', compact('payrollRun'));
     }
 
+    public function edit(PayrollRun $payrollRun): View
+    {
+        abort_if($payrollRun->status !== 'draft', 422, 'Only draft payroll runs can be edited.');
+
+        return view('payroll-runs.edit', compact('payrollRun'));
+    }
+
+    public function update(Request $request, PayrollRun $payrollRun): RedirectResponse
+    {
+        abort_if($payrollRun->status !== 'draft', 422, 'Only draft payroll runs can be edited.');
+
+        $validated = $request->validate([
+            'period_start' => ['required', 'date'],
+            'period_end' => ['required', 'date', 'after_or_equal:period_start'],
+        ]);
+
+        $payrollRun->update($validated);
+
+        return redirect()->route('payroll-runs.show', $payrollRun)->with('status', 'Payroll run updated.');
+    }
+
+    public function destroy(PayrollRun $payrollRun): RedirectResponse
+    {
+        // status flips to 'approved' in the same action that generates payslips (generate()
+        // above), so "still draft" and "no payslips exist yet" are the same condition here.
+        abort_if($payrollRun->status !== 'draft', 422, 'Payroll runs with payslips can no longer be deleted.');
+
+        $payrollRun->delete();
+
+        return redirect()->route('payroll-runs.index')->with('status', 'Payroll run deleted.');
+    }
+
     /**
      * Generate one payslip per staff member with a set salary, using
      * PayeCalculator/NssfCalculator — see docs/DECISIONS.md for the

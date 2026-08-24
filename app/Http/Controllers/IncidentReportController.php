@@ -57,6 +57,43 @@ class IncidentReportController extends Controller
         return redirect()->route('incidents.index')->with('status', 'Report submitted.');
     }
 
+    public function edit(Request $request, IncidentReport $incident): View
+    {
+        abort_unless($incident->reporter_id === $request->user()->id, 403);
+        abort_if($incident->status !== 'open', 422, 'This report is already being triaged and can no longer be edited.');
+
+        $students = $request->user()->hasAnyRole(['admin', 'teacher', 'nurse'])
+            ? Student::orderBy('first_name')->get()
+            : collect();
+
+        return view('incidents.edit', compact('incident', 'students'));
+    }
+
+    public function update(Request $request, IncidentReport $incident): RedirectResponse
+    {
+        abort_unless($incident->reporter_id === $request->user()->id, 403);
+        abort_if($incident->status !== 'open', 422, 'This report is already being triaged and can no longer be edited.');
+
+        $validated = $request->validate([
+            'student_id' => ['nullable', 'exists:students,id'],
+            'category' => ['required', 'in:bullying,violence,other'],
+            'description' => ['required', 'string'],
+        ]);
+
+        $incident->update($validated);
+
+        return redirect()->route('incidents.index')->with('status', 'Report updated.');
+    }
+
+    public function destroy(Request $request, IncidentReport $incident): RedirectResponse
+    {
+        abort_unless($request->user()->hasRole('admin'), 403);
+
+        $incident->delete();
+
+        return redirect()->route('incidents.index')->with('status', 'Report deleted.');
+    }
+
     public function updateStatus(Request $request, IncidentReport $incident): RedirectResponse
     {
         $validated = $request->validate([

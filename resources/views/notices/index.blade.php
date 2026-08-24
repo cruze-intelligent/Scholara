@@ -26,14 +26,25 @@
                                     {{ $notice->author->name }} &middot; audience: {{ $notice->audience }}
                                 </p>
                             </div>
-                            @if ($notice->published_at)
-                                <x-badge color="green">Published</x-badge>
-                            @else
-                                <form method="POST" action="{{ route('notices.publish', $notice) }}">
-                                    @csrf @method('PATCH')
-                                    <button class="text-xs font-medium text-indigo-600 hover:text-indigo-800">Publish</button>
-                                </form>
-                            @endif
+                            <div class="flex flex-col items-end gap-2">
+                                @if ($notice->published_at)
+                                    <x-badge color="green">Published</x-badge>
+                                @else
+                                    <div class="flex items-center gap-3">
+                                        <a href="{{ route('notices.edit', $notice) }}" class="text-xs font-medium text-indigo-600 hover:text-indigo-800">Edit</a>
+                                        <form method="POST" action="{{ route('notices.publish', $notice) }}">
+                                            @csrf @method('PATCH')
+                                            <button class="text-xs font-medium text-indigo-600 hover:text-indigo-800">Publish</button>
+                                        </form>
+                                    </div>
+                                @endif
+                                @if ($notice->author_id === auth()->id() || auth()->user()->hasRole('admin'))
+                                    <form method="POST" action="{{ route('notices.destroy', $notice) }}" onsubmit="return confirm('Delete this notice?')">
+                                        @csrf @method('DELETE')
+                                        <button class="text-xs font-medium text-red-500 hover:text-red-700">Delete</button>
+                                    </form>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 @empty

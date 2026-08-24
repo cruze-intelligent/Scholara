@@ -31,4 +31,27 @@ class InventoryTransactionController extends Controller
 
         return back()->with('status', 'Transaction recorded.');
     }
+
+    /**
+     * Reverses the transaction's effect on InventoryItem.quantity and marks it voided — the
+     * transaction row itself is kept (not deleted) so the stock ledger stays a complete history.
+     */
+    public function void(InventoryItem $inventoryItem, InventoryTransaction $transaction): RedirectResponse
+    {
+        abort_unless($transaction->inventory_item_id === $inventoryItem->id, 404);
+        abort_if($transaction->voided_at, 422, 'This transaction has already been voided.');
+
+        $reversal = $transaction->type === 'in' ? -$transaction->quantity : $transaction->quantity;
+
+        abort_if(
+            $transaction->type === 'in' && $inventoryItem->quantity + $reversal < 0,
+            422,
+            'Voiding this would take stock below zero — some of it has likely already been used.'
+        );
+
+        $inventoryItem->increment('quantity', $reversal);
+        $transaction->update(['voided_at' => now()]);
+
+        return back()->with('status', 'Transaction voided.');
+    }
 }

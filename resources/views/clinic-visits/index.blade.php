@@ -17,15 +17,28 @@
 
             <x-card>
                 @forelse ($visits as $visit)
-                    <div class="border-b border-gray-100 py-3 last:border-0">
-                        <p class="font-medium">{{ $visit->student->full_name }} &mdash; {{ $visit->reason }}</p>
-                        <p class="text-sm text-gray-500">
-                            {{ $visit->occurred_at->format('d M Y H:i') }} &middot; {{ str_replace('_', ' ', $visit->outcome) }}
-                            &middot; logged by {{ $visit->loggedBy->name }}
-                        </p>
-                        @if ($visit->diagnosis)
-                            <p class="text-sm text-gray-500 mt-1">Diagnosis: {{ $visit->diagnosis }}</p>
-                        @endif
+                    <div class="border-b border-gray-100 py-3 last:border-0 flex justify-between items-start gap-4">
+                        <div>
+                            <p class="font-medium">{{ $visit->student->full_name }} &mdash; {{ $visit->reason }}</p>
+                            <p class="text-sm text-gray-500">
+                                {{ $visit->occurred_at->format('d M Y H:i') }} &middot; {{ str_replace('_', ' ', $visit->outcome) }}
+                                &middot; logged by {{ $visit->loggedBy->name }}
+                            </p>
+                            @if ($visit->diagnosis)
+                                <p class="text-sm text-gray-500 mt-1">Diagnosis: {{ $visit->diagnosis }}</p>
+                            @endif
+                        </div>
+                        <div class="flex items-center gap-3 shrink-0">
+                            @if ($visit->logged_by === auth()->id() || auth()->user()->hasRole('admin'))
+                                <a href="{{ route('clinic-visits.edit', $visit) }}" class="text-xs font-medium text-indigo-600 hover:text-indigo-800">Edit</a>
+                            @endif
+                            @if (auth()->user()->hasRole('admin'))
+                                <form method="POST" action="{{ route('clinic-visits.destroy', $visit) }}" onsubmit="return confirm('Delete this record?')">
+                                    @csrf @method('DELETE')
+                                    <button class="text-xs font-medium text-red-500 hover:text-red-700">Delete</button>
+                                </form>
+                            @endif
+                        </div>
                     </div>
                 @empty
                     <x-empty-state message="No clinic visits logged yet." />

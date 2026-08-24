@@ -18,10 +18,19 @@
                     </x-badge>
 
                     @if ($payrollRun->status === 'draft')
-                        <form method="POST" action="{{ route('payroll-runs.generate', $payrollRun) }}">
-                            @csrf
-                            <x-primary-button>{{ __('Generate payslips') }}</x-primary-button>
-                        </form>
+                        <div class="flex items-center gap-3">
+                            <a href="{{ route('payroll-runs.edit', $payrollRun) }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                                {{ __('Edit') }}
+                            </a>
+                            <form method="POST" action="{{ route('payroll-runs.destroy', $payrollRun) }}" onsubmit="return confirm('Delete this payroll run?')">
+                                @csrf @method('DELETE')
+                                <button class="text-sm font-medium text-red-500 hover:text-red-700">{{ __('Delete') }}</button>
+                            </form>
+                            <form method="POST" action="{{ route('payroll-runs.generate', $payrollRun) }}">
+                                @csrf
+                                <x-primary-button>{{ __('Generate payslips') }}</x-primary-button>
+                            </form>
+                        </div>
                     @endif
                 </div>
 
@@ -36,7 +45,7 @@
                         <span>{{ number_format($payslip->nssf, 0) }} &middot; net {{ number_format($payslip->net_pay, 0) }}</span>
                     </div>
                 @empty
-                    <p class="text-gray-500 pt-4">No payslips generated yet — staff need a monthly gross salary set first.</p>
+                    <x-empty-state message="No payslips generated yet — staff need a monthly gross salary set first." />
                 @endforelse
             </x-card>
         </div>

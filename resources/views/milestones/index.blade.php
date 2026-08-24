@@ -23,7 +23,18 @@
                                 <p class="font-medium">{{ $checklist->student->full_name }} &mdash; {{ $checklist->milestone_label }}</p>
                                 <p class="text-sm text-gray-500">{{ $checklist->notes }}</p>
                             </div>
-                            <x-badge color="blue">{{ ucfirst($checklist->domain) }}</x-badge>
+                            <div class="flex flex-col items-end gap-2">
+                                <x-badge color="blue">{{ ucfirst($checklist->domain) }}</x-badge>
+                                @if ($checklist->created_at->isToday() || auth()->user()->hasRole('admin'))
+                                    <div class="flex items-center gap-3 text-xs">
+                                        <a href="{{ route('milestones.edit', $checklist) }}" class="font-medium text-indigo-600 hover:text-indigo-800">Edit</a>
+                                        <form method="POST" action="{{ route('milestones.destroy', $checklist) }}" onsubmit="return confirm('Delete this milestone?')">
+                                            @csrf @method('DELETE')
+                                            <button class="font-medium text-red-500 hover:text-red-700">Delete</button>
+                                        </form>
+                                    </div>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 @empty

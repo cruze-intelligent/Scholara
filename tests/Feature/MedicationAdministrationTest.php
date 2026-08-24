@@ -124,4 +124,64 @@ class MedicationAdministrationTest extends TestCase
         $response->assertSee('Own-school med');
         $response->assertDontSee('Other-school med');
     }
+
+    public function test_recording_nurse_can_correct_their_own_entry(): void
+    {
+        Role::findOrCreate('nurse');
+        $school = School::factory()->create();
+        $nurse = User::factory()->create(['school_id' => $school->id]);
+        $nurse->assignRole('nurse');
+        $student = Student::factory()->for($school)->create();
+
+        $administration = MedicationAdministration::create([
+            'student_id' => $student->id, 'medication_name' => 'Typo', 'dose' => '1', 'route' => 'oral',
+            'administered_by' => $nurse->id, 'administered_at' => now(),
+        ]);
+
+        $this->actingAs($nurse)->put(route('medications.update', $administration), [
+            'medication_name' => 'Paracetamol', 'dose' => '250mg', 'route' => 'oral',
+        ])->assertRedirect(route('medications.index'));
+
+        $this->assertSame('Paracetamol', $administration->fresh()->medication_name);
+    }
+
+    public function test_a_different_nurse_cannot_edit_someone_elses_entry(): void
+    {
+        Role::findOrCreate('nurse');
+        $school = School::factory()->create();
+        $nurseA = User::factory()->create(['school_id' => $school->id]);
+        $nurseA->assignRole('nurse');
+        $nurseB = User::factory()->create(['school_id' => $school->id]);
+        $nurseB->assignRole('nurse');
+        $student = Student::factory()->for($school)->create();
+
+        $administration = MedicationAdministration::create([
+            'student_id' => $student->id, 'medication_name' => 'X', 'dose' => '1', 'route' => 'oral',
+            'administered_by' => $nurseA->id, 'administered_at' => now(),
+        ]);
+
+        $this->actingAs($nurseB)->get(route('medications.edit', $administration))->assertForbidden();
+    }
+
+    public function test_only_admin_can_delete_a_medication_record(): void
+    {
+        Role::findOrCreate('nurse');
+        Role::findOrCreate('admin');
+        $school = School::factory()->create();
+        $nurse = User::factory()->create(['school_id' => $school->id]);
+        $nurse->assignRole('nurse');
+        $admin = User::factory()->create(['school_id' => $school->id]);
+        $admin->assignRole('admin');
+        $student = Student::factory()->for($school)->create();
+
+        $administration = MedicationAdministration::create([
+            'student_id' => $student->id, 'medication_name' => 'X', 'dose' => '1', 'route' => 'oral',
+            'administered_by' => $nurse->id, 'administered_at' => now(),
+        ]);
+
+        $this->actingAs($nurse)->delete(route('medications.destroy', $administration))->assertForbidden();
+        $this->actingAs($admin)->delete(route('medications.destroy', $administration))->assertRedirect();
+
+        $this->assertDatabaseMissing('medication_administrations', ['id' => $administration->id]);
+    }
 }

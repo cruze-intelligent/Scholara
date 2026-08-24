@@ -29,9 +29,22 @@
                                     &middot; by {{ $administration->administeredBy->name }}
                                 </p>
                             </div>
-                            <x-badge :color="$administration->five_rights_checked ? 'green' : 'yellow'">
-                                {{ $administration->five_rights_checked ? 'Five rights verified' : 'Incomplete checks' }}
-                            </x-badge>
+                            <div class="flex flex-col items-end gap-2">
+                                <x-badge :color="$administration->five_rights_checked ? 'green' : 'yellow'">
+                                    {{ $administration->five_rights_checked ? 'Five rights verified' : 'Incomplete checks' }}
+                                </x-badge>
+                                <div class="flex items-center gap-3">
+                                    @if ($administration->administered_by === auth()->id() || auth()->user()->hasRole('admin'))
+                                        <a href="{{ route('medications.edit', $administration) }}" class="text-xs font-medium text-indigo-600 hover:text-indigo-800">Edit</a>
+                                    @endif
+                                    @if (auth()->user()->hasRole('admin'))
+                                        <form method="POST" action="{{ route('medications.destroy', $administration) }}" onsubmit="return confirm('Delete this record?')">
+                                            @csrf @method('DELETE')
+                                            <button class="text-xs font-medium text-red-500 hover:text-red-700">Delete</button>
+                                        </form>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
                     </div>
                 @empty

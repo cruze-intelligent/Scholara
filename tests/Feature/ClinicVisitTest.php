@@ -93,4 +93,46 @@ class ClinicVisitTest extends TestCase
         $response->assertSee('Own-school reason');
         $response->assertDontSee('Other-school reason');
     }
+
+    public function test_logging_nurse_can_correct_their_own_entry(): void
+    {
+        Role::findOrCreate('nurse');
+        $school = School::factory()->create();
+        $nurse = User::factory()->create(['school_id' => $school->id]);
+        $nurse->assignRole('nurse');
+        $student = Student::factory()->for($school)->create();
+
+        $visit = ClinicVisit::create([
+            'student_id' => $student->id, 'reason' => 'Typo', 'outcome' => 'returned_to_class',
+            'logged_by' => $nurse->id, 'occurred_at' => now(),
+        ]);
+
+        $this->actingAs($nurse)->put(route('clinic-visits.update', $visit), [
+            'reason' => 'Headache', 'outcome' => 'sick_bay',
+        ])->assertRedirect(route('clinic-visits.index'));
+
+        $this->assertSame('Headache', $visit->fresh()->reason);
+    }
+
+    public function test_only_admin_can_delete_a_clinic_visit(): void
+    {
+        Role::findOrCreate('nurse');
+        Role::findOrCreate('admin');
+        $school = School::factory()->create();
+        $nurse = User::factory()->create(['school_id' => $school->id]);
+        $nurse->assignRole('nurse');
+        $admin = User::factory()->create(['school_id' => $school->id]);
+        $admin->assignRole('admin');
+        $student = Student::factory()->for($school)->create();
+
+        $visit = ClinicVisit::create([
+            'student_id' => $student->id, 'reason' => 'X', 'outcome' => 'returned_to_class',
+            'logged_by' => $nurse->id, 'occurred_at' => now(),
+        ]);
+
+        $this->actingAs($nurse)->delete(route('clinic-visits.destroy', $visit))->assertForbidden();
+        $this->actingAs($admin)->delete(route('clinic-visits.destroy', $visit))->assertRedirect();
+
+        $this->assertDatabaseMissing('clinic_visits', ['id' => $visit->id]);
+    }
 }

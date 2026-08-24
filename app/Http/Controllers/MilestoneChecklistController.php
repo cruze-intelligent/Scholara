@@ -49,4 +49,46 @@ class MilestoneChecklistController extends Controller
 
         return redirect()->route('milestones.index')->with('status', 'Milestone recorded.');
     }
+
+    public function edit(Request $request, MilestoneChecklist $milestone): View
+    {
+        $this->authorizeSameDay($request, $milestone);
+
+        return view('milestones.edit', ['checklist' => $milestone, 'catalog' => self::CATALOG]);
+    }
+
+    public function update(Request $request, MilestoneChecklist $milestone): RedirectResponse
+    {
+        $this->authorizeSameDay($request, $milestone);
+
+        $validated = $request->validate([
+            'domain' => ['required', 'in:physical,cognitive,emotional,health'],
+            'milestone_label' => ['required', 'string', 'max:255'],
+            'achieved_at' => ['nullable', 'date'],
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        $milestone->update($validated);
+
+        return redirect()->route('milestones.index')->with('status', 'Milestone updated.');
+    }
+
+    public function destroy(Request $request, MilestoneChecklist $milestone): RedirectResponse
+    {
+        $this->authorizeSameDay($request, $milestone);
+
+        $milestone->delete();
+
+        return redirect()->route('milestones.index')->with('status', 'Milestone deleted.');
+    }
+
+    /**
+     * MilestoneChecklist has no author column to check ownership against, unlike the other two
+     * nursery modules — same-day + the same role gate as create() is the honest scope here.
+     */
+    private function authorizeSameDay(Request $request, MilestoneChecklist $milestone): void
+    {
+        abort_unless($request->user()->hasAnyRole(['teacher', 'nurse', 'admin']), 403);
+        abort_unless($milestone->created_at->isToday() || $request->user()->hasRole('admin'), 422, 'Only milestones recorded today can still be edited.');
+    }
 }

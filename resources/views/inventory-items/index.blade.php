@@ -19,10 +19,10 @@
                 @forelse ($items as $item)
                     <div class="border-b border-gray-100 py-3 last:border-0">
                         <div class="flex justify-between items-center mb-2">
-                            <div>
+                            <a href="{{ route('inventory-items.show', $item) }}" class="hover:text-indigo-600">
                                 <p class="font-medium">{{ $item->name }}</p>
                                 <p class="text-sm text-gray-500">{{ ucfirst($item->category) }} &middot; {{ $item->quantity }} {{ $item->unit }}</p>
-                            </div>
+                            </a>
                             <form method="POST" action="{{ route('inventory-items.transactions.store', $item) }}" class="flex gap-2 items-center">
                                 @csrf
                                 <input type="number" name="quantity" min="1" value="1" class="w-16 text-sm border-gray-300 rounded-md">

@@ -54,4 +54,63 @@ class IncidentReportTest extends TestCase
 
         $this->assertSame('in_review', $incident->fresh()->status);
     }
+
+    public function test_reporter_can_edit_their_own_open_report(): void
+    {
+        Role::findOrCreate('parent');
+        $school = School::factory()->create();
+        $parent = User::factory()->create(['school_id' => $school->id]);
+        $parent->assignRole('parent');
+
+        $this->actingAs($parent)->post(route('incidents.store'), [
+            'category' => 'other', 'description' => 'Original.',
+        ]);
+        $incident = \App\Models\IncidentReport::first();
+
+        $this->actingAs($parent)->put(route('incidents.update', $incident), [
+            'category' => 'bullying', 'description' => 'Corrected.',
+        ])->assertRedirect(route('incidents.index'));
+
+        $this->assertSame('bullying', $incident->fresh()->category);
+    }
+
+    public function test_reporter_cannot_edit_once_triage_has_started(): void
+    {
+        Role::findOrCreate('parent');
+        Role::findOrCreate('admin');
+        $school = School::factory()->create();
+        $parent = User::factory()->create(['school_id' => $school->id]);
+        $parent->assignRole('parent');
+        $admin = User::factory()->create(['school_id' => $school->id]);
+        $admin->assignRole('admin');
+
+        $this->actingAs($parent)->post(route('incidents.store'), [
+            'category' => 'other', 'description' => 'Original.',
+        ]);
+        $incident = \App\Models\IncidentReport::first();
+        $this->actingAs($admin)->patch(route('incidents.status', $incident), ['status' => 'in_review']);
+
+        $this->actingAs($parent)->get(route('incidents.edit', $incident))->assertStatus(422);
+    }
+
+    public function test_only_admin_can_delete_a_report(): void
+    {
+        Role::findOrCreate('parent');
+        Role::findOrCreate('admin');
+        $school = School::factory()->create();
+        $parent = User::factory()->create(['school_id' => $school->id]);
+        $parent->assignRole('parent');
+        $admin = User::factory()->create(['school_id' => $school->id]);
+        $admin->assignRole('admin');
+
+        $this->actingAs($parent)->post(route('incidents.store'), [
+            'category' => 'other', 'description' => 'To delete.',
+        ]);
+        $incident = \App\Models\IncidentReport::first();
+
+        $this->actingAs($parent)->delete(route('incidents.destroy', $incident))->assertForbidden();
+        $this->actingAs($admin)->delete(route('incidents.destroy', $incident))->assertRedirect();
+
+        $this->assertDatabaseMissing('incident_reports', ['id' => $incident->id]);
+    }
 }

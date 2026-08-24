@@ -63,4 +63,39 @@ class PayrollRunTest extends TestCase
 
         $this->assertSame(0, $run->fresh()->payslips()->count());
     }
+
+    public function test_a_draft_run_can_be_edited_and_deleted(): void
+    {
+        Role::findOrCreate('hr');
+        $school = School::factory()->create();
+        $hr = User::factory()->create(['school_id' => $school->id]);
+        $hr->assignRole('hr');
+
+        $run = PayrollRun::create(['school_id' => $school->id, 'period_start' => now(), 'period_end' => now()->addMonth(), 'status' => 'draft']);
+        $newEnd = now()->addMonths(2);
+
+        $this->actingAs($hr)->put(route('payroll-runs.update', $run), [
+            'period_start' => $run->period_start->toDateString(),
+            'period_end' => $newEnd->toDateString(),
+        ])->assertRedirect(route('payroll-runs.show', $run));
+
+        $this->assertTrue($run->fresh()->period_end->isSameDay($newEnd));
+
+        $this->actingAs($hr)->delete(route('payroll-runs.destroy', $run))->assertRedirect(route('payroll-runs.index'));
+        $this->assertDatabaseMissing('payroll_runs', ['id' => $run->id]);
+    }
+
+    public function test_an_approved_run_can_no_longer_be_edited_or_deleted(): void
+    {
+        Role::findOrCreate('hr');
+        $school = School::factory()->create();
+        $hr = User::factory()->create(['school_id' => $school->id]);
+        $hr->assignRole('hr');
+
+        $run = PayrollRun::create(['school_id' => $school->id, 'period_start' => now(), 'period_end' => now()->addMonth(), 'status' => 'approved']);
+
+        $this->actingAs($hr)->get(route('payroll-runs.edit', $run))->assertStatus(422);
+        $this->actingAs($hr)->delete(route('payroll-runs.destroy', $run))->assertStatus(422);
+        $this->assertDatabaseHas('payroll_runs', ['id' => $run->id]);
+    }
 }

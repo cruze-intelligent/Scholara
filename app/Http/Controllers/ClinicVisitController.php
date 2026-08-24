@@ -56,4 +56,44 @@ class ClinicVisitController extends Controller
 
         return redirect()->route('clinic-visits.index')->with('status', 'Clinic visit logged.');
     }
+
+    public function edit(Request $request, ClinicVisit $clinic_visit): View
+    {
+        $this->authorizeEdit($request, $clinic_visit);
+
+        return view('clinic-visits.edit', ['visit' => $clinic_visit]);
+    }
+
+    public function update(Request $request, ClinicVisit $clinic_visit): RedirectResponse
+    {
+        $this->authorizeEdit($request, $clinic_visit);
+
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'max:255'],
+            'diagnosis' => ['nullable', 'string'],
+            'treatment' => ['nullable', 'string'],
+            'outcome' => ['required', 'in:returned_to_class,sick_bay,referred_to_hospital'],
+        ]);
+
+        $clinic_visit->update($validated);
+
+        return redirect()->route('clinic-visits.index')->with('status', 'Record updated.');
+    }
+
+    public function destroy(Request $request, ClinicVisit $clinic_visit): RedirectResponse
+    {
+        abort_unless($request->user()->hasRole('admin'), 403);
+
+        $clinic_visit->delete();
+
+        return redirect()->route('clinic-visits.index')->with('status', 'Record deleted.');
+    }
+
+    private function authorizeEdit(Request $request, ClinicVisit $clinic_visit): void
+    {
+        abort_unless(
+            $clinic_visit->logged_by === $request->user()->id || $request->user()->hasRole('admin'),
+            403
+        );
+    }
 }

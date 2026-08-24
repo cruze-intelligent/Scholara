@@ -41,4 +41,39 @@ class WowMomentController extends Controller
 
         return redirect()->route('wow-moments.index')->with('status', 'WOW moment shared.');
     }
+
+    // $wow_moment (snake_case) — Route::resource derives the bound parameter name from the
+    // kebab-case resource name ('wow-moments' -> 'wow_moment').
+    public function edit(Request $request, WowMoment $wow_moment): View
+    {
+        $this->authorizeSameDay($request, $wow_moment);
+
+        return view('wow-moments.edit', ['moment' => $wow_moment]);
+    }
+
+    public function update(Request $request, WowMoment $wow_moment): RedirectResponse
+    {
+        $this->authorizeSameDay($request, $wow_moment);
+
+        $validated = $request->validate(['caption' => ['required', 'string', 'max:255']]);
+
+        $wow_moment->update($validated);
+
+        return redirect()->route('wow-moments.index')->with('status', 'WOW moment updated.');
+    }
+
+    public function destroy(Request $request, WowMoment $wow_moment): RedirectResponse
+    {
+        $this->authorizeSameDay($request, $wow_moment);
+
+        $wow_moment->delete();
+
+        return redirect()->route('wow-moments.index')->with('status', 'WOW moment deleted.');
+    }
+
+    private function authorizeSameDay(Request $request, WowMoment $moment): void
+    {
+        abort_unless($moment->teacher_id === $request->user()->id || $request->user()->hasRole('admin'), 403);
+        abort_unless($moment->created_at->isToday() || $request->user()->hasRole('admin'), 422, 'Only moments shared today can still be edited.');
+    }
 }

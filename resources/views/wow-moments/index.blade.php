@@ -23,7 +23,18 @@
                         @endif
                         <p class="font-medium">{{ $moment->student->full_name }}</p>
                         <p class="text-sm text-gray-500">{{ $moment->caption }}</p>
-                        <p class="text-xs text-gray-400 mt-1">by {{ $moment->teacher->name }}</p>
+                        <div class="flex justify-between items-center mt-1">
+                            <p class="text-xs text-gray-400">by {{ $moment->teacher->name }}</p>
+                            @if (($moment->teacher_id === auth()->id() && $moment->created_at->isToday()) || auth()->user()->hasRole('admin'))
+                                <div class="flex items-center gap-3 text-xs">
+                                    <a href="{{ route('wow-moments.edit', $moment) }}" class="font-medium text-indigo-600 hover:text-indigo-800">Edit</a>
+                                    <form method="POST" action="{{ route('wow-moments.destroy', $moment) }}" onsubmit="return confirm('Delete this moment?')">
+                                        @csrf @method('DELETE')
+                                        <button class="font-medium text-red-500 hover:text-red-700">Delete</button>
+                                    </form>
+                                </div>
+                            @endif
+                        </div>
                     </x-card>
                 @empty
                     <x-empty-state message="No WOW moments shared yet." class="sm:col-span-2" />

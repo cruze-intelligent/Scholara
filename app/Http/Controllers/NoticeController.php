@@ -45,6 +45,39 @@ class NoticeController extends Controller
         return redirect()->route('notices.index')->with('status', 'Notice saved.');
     }
 
+    public function edit(Request $request, Notice $notice): View
+    {
+        abort_unless($notice->author_id === $request->user()->id, 403);
+        abort_if($notice->published_at, 422, 'Published notices can no longer be edited.');
+
+        return view('notices.edit', compact('notice'));
+    }
+
+    public function update(Request $request, Notice $notice): RedirectResponse
+    {
+        abort_unless($notice->author_id === $request->user()->id, 403);
+        abort_if($notice->published_at, 422, 'Published notices can no longer be edited.');
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'body' => ['required', 'string'],
+            'audience' => ['required', 'string', 'max:50'],
+        ]);
+
+        $notice->update($validated);
+
+        return redirect()->route('notices.index')->with('status', 'Notice updated.');
+    }
+
+    public function destroy(Request $request, Notice $notice): RedirectResponse
+    {
+        abort_unless($notice->author_id === $request->user()->id || $request->user()->hasRole('admin'), 403);
+
+        $notice->delete();
+
+        return redirect()->route('notices.index')->with('status', 'Notice deleted.');
+    }
+
     public function publish(Notice $notice): RedirectResponse
     {
         $notice->update(['published_at' => now()]);

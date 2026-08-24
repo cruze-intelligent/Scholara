@@ -67,4 +67,46 @@ class MedicationAdministrationController extends Controller
 
         return redirect()->route('medications.index')->with('status', 'Medication administration logged.');
     }
+
+    public function edit(Request $request, MedicationAdministration $medication): View
+    {
+        $this->authorizeEdit($request, $medication);
+
+        $students = Student::orderBy('first_name')->get();
+
+        return view('medications.edit', ['administration' => $medication, 'students' => $students]);
+    }
+
+    public function update(Request $request, MedicationAdministration $medication): RedirectResponse
+    {
+        $this->authorizeEdit($request, $medication);
+
+        $validated = $request->validate([
+            'medication_name' => ['required', 'string', 'max:255'],
+            'dose' => ['required', 'string', 'max:100'],
+            'route' => ['required', 'string', 'max:100'],
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        $medication->update($validated);
+
+        return redirect()->route('medications.index')->with('status', 'Record updated.');
+    }
+
+    public function destroy(Request $request, MedicationAdministration $medication): RedirectResponse
+    {
+        abort_unless($request->user()->hasRole('admin'), 403);
+
+        $medication->delete();
+
+        return redirect()->route('medications.index')->with('status', 'Record deleted.');
+    }
+
+    private function authorizeEdit(Request $request, MedicationAdministration $medication): void
+    {
+        abort_unless(
+            $medication->administered_by === $request->user()->id || $request->user()->hasRole('admin'),
+            403
+        );
+    }
 }
