@@ -22,7 +22,7 @@
                         @endforeach
                     </div>
                 @empty
-                    <p class="text-gray-500">No assessment scores recorded yet.</p>
+                    <x-empty-state message="No assessment scores recorded yet." />
                 @endforelse
             </x-card>
 

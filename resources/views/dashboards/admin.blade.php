@@ -41,7 +41,7 @@
                         <p class="text-sm text-gray-500">{{ $notice->published_at?->format('d M Y') ?? 'Not yet published' }}</p>
                     </div>
                 @empty
-                    <p class="text-gray-500">No notices yet.</p>
+                    <x-empty-state message="No notices yet." />
                 @endforelse
             </x-card>
         </div>

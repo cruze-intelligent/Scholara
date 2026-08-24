@@ -31,7 +31,7 @@
                         </div>
                     </a>
                 @empty
-                    <p class="text-gray-500">No invoices yet.</p>
+                    <x-empty-state message="No invoices yet." />
                 @endforelse
             </x-card>
 

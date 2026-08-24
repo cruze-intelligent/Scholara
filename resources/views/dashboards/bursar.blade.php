@@ -16,23 +16,25 @@
                 </a>
             </div>
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+            <x-card>
                 <p class="text-sm text-gray-500">Total unpaid</p>
-                <p class="text-3xl font-semibold">{{ number_format($unpaidTotal, 0) }}</p>
-            </div>
+                <p class="text-3xl font-semibold text-gray-800 mt-1">{{ number_format($unpaidTotal, 0) }} UGX</p>
+            </x-card>
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <h3 class="font-semibold text-gray-800 mb-4">Unpaid invoices</h3>
+            <x-card title="Unpaid invoices">
                 @forelse ($unpaidInvoices as $invoice)
                     <a href="{{ route('invoices.show', $invoice) }}"
-                        class="border-b border-gray-100 py-2 last:border-0 flex justify-between text-sm hover:text-indigo-600">
-                        <span>{{ $invoice->student->full_name }} &mdash; {{ $invoice->term }}</span>
-                        <span>{{ number_format($invoice->amount_due, 0) }} ({{ $invoice->status }})</span>
+                        class="border-b border-gray-100 py-2.5 last:border-0 flex justify-between items-center text-sm hover:text-indigo-600">
+                        <span class="text-gray-700">{{ $invoice->student->full_name }} <span class="text-gray-400">— {{ $invoice->term }}</span></span>
+                        <span class="flex items-center gap-2">
+                            <span class="font-medium text-gray-800">{{ number_format($invoice->amount_due, 0) }}</span>
+                            <x-badge :color="$invoice->status === 'partially_paid' ? 'yellow' : 'red'">{{ str_replace('_', ' ', $invoice->status) }}</x-badge>
+                        </span>
                     </a>
                 @empty
-                    <p class="text-gray-500">No outstanding invoices.</p>
+                    <x-empty-state message="No outstanding invoices." />
                 @endforelse
-            </div>
+            </x-card>
         </div>
     </div>
 </x-app-layout>

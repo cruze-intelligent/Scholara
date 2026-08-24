@@ -27,7 +27,7 @@
                         </div>
                     </div>
                 @empty
-                    <p class="text-gray-500">No milestones recorded yet.</p>
+                    <x-empty-state message="No milestones recorded yet." />
                 @endforelse
             </x-card>
 

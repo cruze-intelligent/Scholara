@@ -7,22 +7,30 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            <div class="flex justify-end">
+                <a href="{{ route('payroll-runs.index') }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                    Payroll runs &rarr;
+                </a>
+            </div>
+
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+                <x-card>
                     <p class="text-sm text-gray-500">Staff members</p>
-                    <p class="text-3xl font-semibold">{{ $staffCount }}</p>
-                </div>
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+                    <p class="text-3xl font-semibold text-gray-800 mt-1">{{ $staffCount }}</p>
+                </x-card>
+                <x-card>
                     <p class="text-sm text-gray-500">Latest payroll run</p>
                     @if ($latestPayrollRun)
-                        <p class="text-lg font-semibold">
+                        <p class="text-lg font-semibold text-gray-800 mt-1">
                             {{ $latestPayrollRun->period_start->format('d M') }} &ndash; {{ $latestPayrollRun->period_end->format('d M Y') }}
                         </p>
-                        <p class="text-sm text-gray-500">{{ ucfirst($latestPayrollRun->status) }}</p>
+                        <x-badge :color="$latestPayrollRun->status === 'approved' ? 'green' : 'yellow'" class="mt-1">
+                            {{ ucfirst($latestPayrollRun->status) }}
+                        </x-badge>
                     @else
-                        <p class="text-gray-500">No payroll runs yet.</p>
+                        <p class="text-gray-400 text-sm mt-1">No payroll runs yet.</p>
                     @endif
-                </div>
+                </x-card>
             </div>
         </div>
     </div>

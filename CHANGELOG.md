@@ -2,6 +2,31 @@
 
 Running log of what's been built, in plain language. Newest first.
 
+## 2026-08-24
+
+- Built the real notification system, pulled forward out of plan order per explicit feedback
+  ("notifications should be clearable") — the nav bell was a lightweight recency-badge
+  placeholder before this, not an actual notification center. Added the `notifications` table,
+  extended `ClinicVisitLogged`/`MedicationAdministered` with a database channel (and removed
+  `ShouldQueue` from both — that would defer the in-app row to a queue worker nothing guarantees
+  is running), and added three new notifications wired into real triggers:
+  `PaymentReceived` (guardian, from both the bursar's manual payment and the DGateway webhook —
+  the Financial Center had no payment confirmation at all before this), `IncidentStatusUpdated`
+  (the reporter, correctly skipped for anonymous reports), and `NoticePublished` (every
+  guardian/learner at the school, database-only — mailing everyone on every routine notice would
+  be noisy). The nav bell is now a real dropdown: unread badge, last 10 notifications, and
+  "clearable" taken literally — a per-item delete button, plus mark-all-read/clear-all.
+- Did a full UI polish pass per feedback that the UI was "sub-standard" — migrated all 8 role
+  dashboards and every module list view from raw `bg-white` divs to `<x-card>`, added a new
+  `<x-empty-state>` component (icon + message) replacing plain gray "No X yet" text everywhere,
+  and added colored status badges where things were previously plain text (payroll/invoice
+  status, low-stock warnings).
+- Added `DashboardTest` (one request per role) — the original audit flagged zero coverage on
+  `/dashboard`, and every dashboard view had just been touched by the polish pass. Caught a real
+  bug immediately: PHPUnit 11 dropped docblock `@dataProvider` in favor of the `#[DataProvider]`
+  attribute — the docblock form parses without error but silently runs nothing.
+- 99/99 tests passing.
+
 ## 2026-08-23 (7)
 
 - Rewrote the nav a second time: the `xl:` breakpoint fix from earlier today still left a gap

@@ -47,7 +47,7 @@
                         </div>
                     </div>
                 @empty
-                    <p class="text-gray-500">No reports yet.</p>
+                    <x-empty-state message="No reports yet." />
                 @endforelse
             </x-card>
 

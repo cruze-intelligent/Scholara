@@ -30,7 +30,7 @@
                         </div>
                     </a>
                 @empty
-                    <p class="text-gray-500">No payroll runs yet.</p>
+                    <x-empty-state message="No payroll runs yet." />
                 @endforelse
             </x-card>
         </div>

@@ -184,6 +184,61 @@ broke. Went with a more decisive fix instead of another breakpoint tweak.
       tables that don't all carry their own `school_id` (same reasoning as the Phase 0 fixes).
 - [x] Feature tests: `ReportTest`. 85/85 passing.
 
+## Phase 5 — Real notifications, moved up — done 2026-08-24
+
+Pulled forward out of order per explicit feedback ("notifications should be clearable") — the
+nav's recency-badge bell from Phase 2.6 was a lightweight placeholder, not a real notification
+center.
+
+- [x] `notifications` table (Laravel's standard polymorphic schema).
+- [x] `ClinicVisitLogged`/`MedicationAdministered` extended with a `'database'` channel and
+      `toDatabase()`; both had `ShouldQueue` removed — that would defer *every* channel including
+      the database row to a queue worker, and nothing guarantees one is running (no
+      `queue:work` process exists in local dev or is documented for Laravel Cloud). A small
+      school's volume doesn't need queuing; synchronous keeps the bell accurate immediately.
+- [x] Three new notification classes wired into real triggers: `PaymentReceived` (guardian, from
+      both `InvoiceController::recordPayment` and the DGateway webhook on `transaction.completed`
+      — the Financial Center had no payment-confirmation notification at all before this),
+      `IncidentStatusUpdated` (the reporter, skipped for anonymous reports by design — see
+      `docs/DECISIONS.md`'s RTRR note), `NoticePublished` (every guardian + learner at the school,
+      database-only/no mail — mailing everyone on every routine notice would be noisy).
+- [x] `NotificationController` — `destroy` (clear one), `destroyAll` (clear all), `markAllRead`.
+      "Clearable" means delete, not just mark-read — the literal ask.
+- [x] Nav bell replaced with a real dropdown: unread badge, last 10 notifications, per-item clear
+      (×) button, "Mark all read" / "Clear all". Server-rendered on each page load, no
+      polling/AJAX — consistent with the rest of the app, won't live-update without a refresh,
+      a deliberate simplicity trade-off.
+- [x] Feature tests: `NotificationTest` (guardian notified on payment, clear one/all, mark-all-
+      read, reporter notified on status change, anonymous reporter correctly skipped).
+
+## Phase 2.7 — UI polish pass — done 2026-08-24
+
+Explicit feedback: "polish the UI, it's so sub-standard, we can do better." Swept every dashboard
+and module list view rather than a few spot fixes.
+
+- [x] All 8 role dashboards migrated from raw `bg-white ... rounded-lg` divs to `<x-card>`,
+      picking up the Phase 2.6 `rounded-xl`/`ring` treatment automatically. Added colored
+      `<x-badge>` status pills where a status was previously plain text (payroll run status,
+      invoice status on the bursar/parent dashboards, low-stock inventory warning), and gave stat
+      numbers more visual weight (`text-3xl font-semibold` consistently, was inconsistent before).
+- [x] New `<x-empty-state>` component (icon + message) replacing plain `text-gray-500` "No X yet"
+      text across all 8 dashboards plus assessments/notices/incidents/medications/clinic-visits/
+      payroll-runs/inventory-items/daily-activity-logs/milestones/wow-moments/invoices/users/
+      reports/learner list views — one shared component instead of ad hoc text everywhere.
+      Deliberately left the *reassuring* empty state on the academics report ("no students
+      currently below 60%") as plain text — that one's good news, not a data gap, so the same
+      icon would send the wrong signal; and left two compact inline roster/checkbox empty states
+      (`users/edit.blade.php`, `attendance/create.blade.php`) as plain text since the full
+      icon+padding component would look oversized in that context.
+- [x] Added `DashboardTest` (one request per role) — the original audit flagged zero coverage on
+      `/dashboard` for any role, and every dashboard view was just touched, so this is exactly the
+      moment a regression would otherwise go unnoticed. Caught one real bug while adding it:
+      PHPUnit 11 (this project's version) dropped docblock `@dataProvider` support in favor of the
+      `#[DataProvider]` attribute — the docblock form parses but silently does nothing.
+- [x] 99/99 tests passing throughout.
+- [ ] **Not done in this pass**: the module list views beyond empty-states (edit/destroy actions,
+      dark theme) are still Phase 3/Phase 6 work, not pulled forward here.
+
 ## Phase 3 — CRUD depth across every module
 
 Per the audit: every module tops out at `index`/`create`/`store` (routes explicitly
@@ -210,25 +265,13 @@ below the docs' own bar for "scaffolded."
 - [ ] Role scoping mirroring the incident-report pattern (guardian sees own student's passes only)
 - [ ] Feature tests
 
-## Phase 5 — Notifications
+## Phase 5 — Notifications — done, see above
 
-No `notifications` table exists; two mail-only `Notification` classes already exist
-(`ClinicVisitLogged`, `MedicationAdministered`) and `User` already has `Notifiable` — this is glue
-work, not a from-scratch system.
-
-- [ ] `php artisan notifications:table` migration
-- [ ] Extend `via()` on the two existing notification classes to add `'database'` — **do not**
-      mark the database channel `ShouldQueue` (or split channels) so the bell count updates
-      immediately rather than waiting on a queue worker that isn't running anywhere in local dev
-      or documented for Laravel Cloud
-- [ ] New notification events worth adding: new assessment score posted (learner/parent), payment
-      received (parent), incident status changed (reporter), low-stock alert (librarian), new
-      gate pass request (approver)
-- [ ] Bell icon + dropdown notification center in `resources/views/layouts/navigation.blade.php`
-      (natural spot: beside the existing `<x-dropdown>` settings menu, same Alpine pattern), mirror
-      in the responsive mobile menu block
-- [ ] Mark-as-read endpoint
-- [ ] Feature tests
+Built earlier than planned (moved up per feedback) — see "Phase 5 — Real notifications, moved up"
+above for what actually landed. Left as a follow-up, not done in that pass: a **new assessment
+score posted** notification (learner/parent) and a **low-stock alert** (librarian) — both named in
+the original plan here but not built; gate passes don't exist yet at all (Phase 4 below), so a
+gate-pass-request notification has nothing to attach to yet either.
 
 ## Phase 6 — Dark theme
 

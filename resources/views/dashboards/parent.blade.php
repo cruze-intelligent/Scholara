@@ -8,12 +8,12 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
             @forelse ($students as $student)
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+                <x-card>
                     <div class="flex items-center gap-4 mb-4">
                         @if ($student->photo_url)
-                            <img src="{{ $student->photo_url }}" alt="" class="h-14 w-14 rounded-full object-cover">
+                            <img src="{{ $student->photo_url }}" alt="" class="h-14 w-14 rounded-full object-cover ring-2 ring-white shadow-sm">
                         @else
-                            <div class="h-14 w-14 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-semibold">
+                            <div class="h-14 w-14 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-semibold ring-2 ring-white shadow-sm">
                                 {{ collect(explode(' ', $student->full_name))->map(fn ($n) => $n[0] ?? '')->take(2)->implode('') }}
                             </div>
                         @endif
@@ -30,32 +30,35 @@
                         </div>
                     </div>
 
-                    <p class="text-sm text-gray-500 mb-2">Recent assessment scores</p>
+                    <p class="text-sm font-medium text-gray-500 mb-2">Recent assessment scores</p>
                     @forelse ($student->assessmentScores->take(5) as $score)
                         <div class="border-b border-gray-100 py-2 last:border-0 flex justify-between text-sm">
-                            <span>{{ $score->assessment->type }}</span>
-                            <span>{{ $score->raw_score }} / {{ $score->assessment->max_score }}</span>
+                            <span class="text-gray-700">{{ $score->assessment->type }}</span>
+                            <span class="font-medium text-gray-800">{{ $score->raw_score }} / {{ $score->assessment->max_score }}</span>
                         </div>
                     @empty
-                        <p class="text-gray-500 text-sm mb-4">No scores recorded yet.</p>
+                        <p class="text-gray-400 text-sm mb-4">No scores recorded yet.</p>
                     @endforelse
 
                     @if ($student->subjectPredictions->isNotEmpty())
-                        <p class="text-sm text-gray-500 mt-4 mb-2">Performance trend</p>
+                        <p class="text-sm font-medium text-gray-500 mt-4 mb-2">Performance trend</p>
                         @foreach ($student->subjectPredictions as $prediction)
                             <div class="border-b border-gray-100 py-2 last:border-0 flex justify-between text-sm">
-                                <span>{{ $prediction['subject']->name }}</span>
-                                <span>{{ $prediction['predicted'] !== null ? round($prediction['predicted'], 1) : '—' }}</span>
+                                <span class="text-gray-700">{{ $prediction['subject']->name }}</span>
+                                <span class="font-medium text-gray-800">{{ $prediction['predicted'] !== null ? round($prediction['predicted'], 1) : '—' }}</span>
                             </div>
                         @endforeach
                     @endif
 
-                    <p class="text-sm text-gray-500 mt-4 mb-2">Invoices</p>
+                    <p class="text-sm font-medium text-gray-500 mt-4 mb-2">Invoices</p>
                     @forelse ($student->invoices as $invoice)
                         <div class="border-b border-gray-100 py-2 last:border-0 flex justify-between items-center text-sm">
-                            <span>{{ $invoice->term }}</span>
+                            <span class="text-gray-700">{{ $invoice->term }}</span>
                             <span class="flex items-center gap-3">
-                                {{ number_format($invoice->amount_due, 0) }} ({{ $invoice->status }})
+                                <span class="text-gray-800">{{ number_format($invoice->amount_due, 0) }}</span>
+                                <x-badge :color="match($invoice->status) { 'paid' => 'green', 'partially_paid' => 'yellow', default => 'red' }">
+                                    {{ str_replace('_', ' ', $invoice->status) }}
+                                </x-badge>
                                 @if ($invoice->status !== 'paid')
                                     <a href="{{ route('invoices.pay', $invoice) }}" class="font-medium text-indigo-600 hover:text-indigo-800">
                                         {{ __('Pay') }}
@@ -64,13 +67,13 @@
                             </span>
                         </div>
                     @empty
-                        <p class="text-gray-500 text-sm">No invoices yet.</p>
+                        <p class="text-gray-400 text-sm">No invoices yet.</p>
                     @endforelse
-                </div>
+                </x-card>
             @empty
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                    <p class="text-gray-500">No students linked to your account yet.</p>
-                </div>
+                <x-card>
+                    <x-empty-state message="No students linked to your account yet." />
+                </x-card>
             @endforelse
         </div>
     </div>

@@ -37,7 +37,7 @@
                         </div>
                     </div>
                 @empty
-                    <p class="text-gray-500">No notices yet.</p>
+                    <x-empty-state message="No notices yet." />
                 @endforelse
             </x-card>
 

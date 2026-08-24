@@ -28,7 +28,7 @@
                         @endif
                     </div>
                 @empty
-                    <p class="text-gray-500">No clinic visits logged yet.</p>
+                    <x-empty-state message="No clinic visits logged yet." />
                 @endforelse
             </x-card>
 

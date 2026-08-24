@@ -56,7 +56,7 @@
                         </div>
                     </div>
                 @empty
-                    <p class="text-gray-500">No users yet.</p>
+                    <x-empty-state message="No users yet." />
                 @endforelse
             </x-card>
         </div>

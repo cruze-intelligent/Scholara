@@ -26,7 +26,7 @@
                         <p class="text-xs text-gray-400 mt-1">by {{ $moment->teacher->name }}</p>
                     </x-card>
                 @empty
-                    <p class="text-gray-500">No WOW moments shared yet.</p>
+                    <x-empty-state message="No WOW moments shared yet." class="sm:col-span-2" />
                 @endforelse
             </div>
 

@@ -35,7 +35,7 @@
                         </div>
                     </div>
                 @empty
-                    <p class="text-gray-500">No medication administrations logged yet.</p>
+                    <x-empty-state message="No medication administrations logged yet." />
                 @endforelse
             </x-card>
 

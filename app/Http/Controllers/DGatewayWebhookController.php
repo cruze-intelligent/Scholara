@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Payment;
+use App\Notifications\PaymentReceived;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 
 class DGatewayWebhookController extends Controller
 {
@@ -57,6 +59,8 @@ class DGatewayWebhookController extends Controller
 
         if ($payment->status === Payment::STATUS_COMPLETED) {
             $payment->invoice->syncPaymentStatus();
+
+            Notification::send($payment->invoice->student->guardians->map->user->filter(), new PaymentReceived($payment));
         }
 
         return response('', 200);

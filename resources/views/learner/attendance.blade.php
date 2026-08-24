@@ -14,7 +14,7 @@
                         </x-badge>
                     </div>
                 @empty
-                    <p class="text-gray-500">No attendance recorded yet.</p>
+                    <x-empty-state message="No attendance recorded yet." />
                 @endforelse
             </x-card>
 

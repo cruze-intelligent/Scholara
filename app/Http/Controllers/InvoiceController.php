@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Student;
+use App\Notifications\PaymentReceived;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -78,7 +80,7 @@ class InvoiceController extends Controller
             'reference' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $invoice->payments()->create([
+        $payment = $invoice->payments()->create([
             ...$validated,
             'currency' => config('services.dgateway.default_currency'),
             'status' => Payment::STATUS_COMPLETED,
@@ -87,6 +89,8 @@ class InvoiceController extends Controller
         ]);
 
         $invoice->syncPaymentStatus();
+
+        Notification::send($invoice->student->guardians->map->user->filter(), new PaymentReceived($payment));
 
         return redirect()->route('invoices.show', $invoice)->with('status', 'Payment recorded.');
     }

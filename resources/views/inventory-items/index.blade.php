@@ -35,7 +35,7 @@
                         </div>
                     </div>
                 @empty
-                    <p class="text-gray-500">No inventory items yet.</p>
+                    <x-empty-state message="No inventory items yet." />
                 @endforelse
             </x-card>
         </div>

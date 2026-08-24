@@ -1,12 +1,6 @@
 @php
-    $recentNoticeCount = \App\Models\Notice::whereNotNull('published_at')
-        ->where('published_at', '>=', now()->subDays(3))
-        ->count();
-    $noticesRoute = match (true) {
-        auth()->user()->hasAnyRole(['admin', 'teacher']) => route('notices.index'),
-        auth()->user()->hasRole('learner') => route('learner.notices'),
-        default => route('dashboard'),
-    };
+    $notifications = auth()->user()->notifications()->latest()->take(10)->get();
+    $unreadCount = $notifications->whereNull('read_at')->count();
 @endphp
 
 <nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
@@ -19,16 +13,60 @@
             <!-- Kept deliberately minimal — everything else lives behind the menu toggle so the
                  header doesn't get crowded as more roles/modules stack up. -->
             <div class="flex items-center gap-1">
-                <a href="{{ $noticesRoute }}" class="relative p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100" title="Noticeboard">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                    </svg>
-                    @if ($recentNoticeCount > 0)
-                        <span class="absolute top-1 right-1 h-4 min-w-4 px-1 rounded-full bg-indigo-600 text-white text-[10px] font-medium leading-4 text-center">
-                            {{ $recentNoticeCount }}
-                        </span>
-                    @endif
-                </a>
+                <x-dropdown align="right" width="w-80">
+                    <x-slot name="trigger">
+                        <button class="relative p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100" title="Notifications">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg>
+                            @if ($unreadCount > 0)
+                                <span class="absolute top-1 right-1 h-4 min-w-4 px-1 rounded-full bg-indigo-600 text-white text-[10px] font-medium leading-4 text-center">
+                                    {{ $unreadCount }}
+                                </span>
+                            @endif
+                        </button>
+                    </x-slot>
+
+                    <x-slot name="content">
+                        <div class="flex items-center justify-between px-4 py-2 border-b border-gray-100">
+                            <span class="text-sm font-semibold text-gray-700">{{ __('Notifications') }}</span>
+                            @if ($notifications->isNotEmpty())
+                                <div class="flex items-center gap-3 text-xs">
+                                    @if ($unreadCount > 0)
+                                        <form method="POST" action="{{ route('notifications.read-all') }}">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" class="text-indigo-600 hover:text-indigo-800">{{ __('Mark all read') }}</button>
+                                        </form>
+                                    @endif
+                                    <form method="POST" action="{{ route('notifications.destroy-all') }}">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-gray-400 hover:text-gray-600">{{ __('Clear all') }}</button>
+                                    </form>
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="max-h-96 overflow-y-auto">
+                            @forelse ($notifications as $notification)
+                                <div class="flex items-start gap-2 px-4 py-3 border-b border-gray-50 last:border-0 {{ $notification->read_at ? '' : 'bg-indigo-50/40' }}">
+                                    <a href="{{ $notification->data['url'] ?? route('dashboard') }}" class="flex-1 text-sm text-gray-700 hover:text-gray-900">
+                                        <p>{{ $notification->data['message'] ?? 'Notification' }}</p>
+                                        <p class="text-xs text-gray-400 mt-0.5">{{ $notification->created_at->diffForHumans() }}</p>
+                                    </a>
+                                    <form method="POST" action="{{ route('notifications.destroy', $notification->id) }}">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" title="Clear" class="text-gray-300 hover:text-gray-500 p-1">&times;</button>
+                                    </form>
+                                </div>
+                            @empty
+                                <p class="px-4 py-6 text-sm text-gray-400 text-center">{{ __("You're all caught up.") }}</p>
+                            @endforelse
+                        </div>
+                    </x-slot>
+                </x-dropdown>
 
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">

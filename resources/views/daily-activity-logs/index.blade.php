@@ -27,7 +27,7 @@
                         <p class="text-xs text-gray-400">Logged by {{ $log->loggedBy->name }}</p>
                     </div>
                 @empty
-                    <p class="text-gray-500">No activity logs yet.</p>
+                    <x-empty-state message="No activity logs yet." />
                 @endforelse
             </x-card>
 

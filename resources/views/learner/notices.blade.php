@@ -13,7 +13,7 @@
                         <p class="text-sm text-gray-700">{{ $notice->body }}</p>
                     </div>
                 @empty
-                    <p class="text-gray-500">No notices yet.</p>
+                    <x-empty-state message="No notices yet." />
                 @endforelse
             </x-card>
 

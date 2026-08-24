@@ -7,40 +7,37 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <h3 class="font-semibold text-gray-800 mb-4">My classes</h3>
+            <x-card title="My classes">
                 @forelse ($classes as $class)
-                    <div class="border-b border-gray-100 py-2 last:border-0 flex justify-between">
-                        <span>{{ $class->name }} ({{ $class->level }})</span>
-                        <span class="text-gray-500">{{ $class->students_count }} students</span>
+                    <div class="border-b border-gray-100 py-2.5 last:border-0 flex justify-between items-center">
+                        <span class="font-medium text-gray-800">{{ $class->name }} <span class="font-normal text-gray-400">({{ $class->level }})</span></span>
+                        <span class="text-sm text-gray-500">{{ $class->students_count }} students</span>
                     </div>
                 @empty
-                    <p class="text-gray-500">No classes assigned yet.</p>
+                    <x-empty-state message="No classes assigned yet." />
                 @endforelse
-            </div>
+            </x-card>
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <h3 class="font-semibold text-gray-800 mb-4">Upcoming lesson plans</h3>
+            <x-card title="Upcoming lesson plans">
                 @forelse ($upcomingLessonPlans as $plan)
-                    <div class="border-b border-gray-100 py-2 last:border-0">
-                        <p class="font-medium">{{ $plan->date->format('d M Y') }} &mdash; {{ $plan->schoolClass->name }}</p>
+                    <div class="border-b border-gray-100 py-2.5 last:border-0">
+                        <p class="font-medium text-gray-800">{{ $plan->date->format('d M Y') }} &mdash; {{ $plan->schoolClass->name }}</p>
                     </div>
                 @empty
-                    <p class="text-gray-500">No lesson plans scheduled.</p>
+                    <x-empty-state message="No lesson plans scheduled." />
                 @endforelse
-            </div>
+            </x-card>
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <h3 class="font-semibold text-gray-800 mb-4">Support Strategy alerts</h3>
+            <x-card title="Support Strategy alerts">
                 @forelse ($supportAlerts as $alert)
-                    <div class="border-b border-gray-100 py-2 last:border-0 flex justify-between text-sm">
-                        <span>{{ $alert['student']->full_name }} &mdash; {{ $alert['subject']->name }}</span>
-                        <span class="text-yellow-700">predicted {{ $alert['predicted'] }} (baseline {{ $alert['baseline'] }})</span>
+                    <div class="border-b border-gray-100 py-2.5 last:border-0 flex justify-between items-center text-sm">
+                        <span class="text-gray-700">{{ $alert['student']->full_name }} &mdash; {{ $alert['subject']->name }}</span>
+                        <x-badge color="yellow">predicted {{ $alert['predicted'] }} (baseline {{ $alert['baseline'] }})</x-badge>
                     </div>
                 @empty
-                    <p class="text-gray-500">No students currently flagged.</p>
+                    <x-empty-state message="No students currently flagged." />
                 @endforelse
-            </div>
+            </x-card>
         </div>
     </div>
 </x-app-layout>

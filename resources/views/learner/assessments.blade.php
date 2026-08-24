@@ -15,7 +15,7 @@
                         <p class="font-medium">{{ $score->raw_score }} / {{ $score->assessment->max_score }}</p>
                     </div>
                 @empty
-                    <p class="text-gray-500">No scores recorded yet.</p>
+                    <x-empty-state message="No scores recorded yet." />
                 @endforelse
             </x-card>
         </div>

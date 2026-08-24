@@ -28,7 +28,7 @@
                         </div>
                     </a>
                 @empty
-                    <p class="text-gray-500">No assessments created yet.</p>
+                    <x-empty-state message="No assessments created yet." />
                 @endforelse
             </x-card>
         </div>

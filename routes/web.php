@@ -17,6 +17,7 @@ use App\Http\Controllers\LearnerController;
 use App\Http\Controllers\MedicationAdministrationController;
 use App\Http\Controllers\MilestoneChecklistController;
 use App\Http\Controllers\NoticeController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PayrollRunController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
@@ -45,6 +46,10 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::patch('notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+    Route::delete('notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+    Route::delete('notifications', [NotificationController::class, 'destroyAll'])->name('notifications.destroy-all');
+
     // User management — admin-only, scoped to their own school inside the controller.
     Route::middleware('role:admin')->group(function () {
         Route::resource('users', UserController::class)->only(['index', 'create', 'store', 'edit', 'update']);

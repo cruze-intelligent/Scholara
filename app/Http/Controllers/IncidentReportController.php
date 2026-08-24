@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\IncidentReport;
 use App\Models\Student;
+use App\Notifications\IncidentStatusUpdated;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -64,6 +65,10 @@ class IncidentReportController extends Controller
         ]);
 
         $incident->update($validated);
+
+        // Anonymous reports have no reporter_id to notify — that's by design (RTRR-aligned,
+        // see docs/DECISIONS.md), not a gap.
+        $incident->reporter?->notify(new IncidentStatusUpdated($incident));
 
         return back()->with('status', 'Report updated.');
     }
