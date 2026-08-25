@@ -37,10 +37,11 @@ class UserController extends Controller
     public function create(): View
     {
         return view('users.create', [
-            'roles' => Role::pluck('name'),
-            'students' => Student::orderBy('first_name')->get(),
+            // Parent accounts are now provisioned automatically from a student's record (see
+            // StudentController) — this screen is for staff/learner accounts only. Existing
+            // parent-role users are still editable via edit() below.
+            'roles' => Role::pluck('name')->reject(fn ($role) => $role === 'parent')->values(),
             'unlinkedStudents' => Student::whereNull('user_id')->orderBy('first_name')->get(),
-            'classes' => SchoolClass::orderBy('name')->get(),
         ]);
     }
 

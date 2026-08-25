@@ -68,6 +68,13 @@
   phase 0–2 target the Blade web app; the JSON API groundwork keeps this option open.
 - Multi-school/tenant billing (per-student/term, enterprise license, NGO grant pricing models
   from the plan) — revisit once there's more than one paying school.
+- **School self-registration + subscriptions** (requested 2026-08-25, explicitly "later stages") —
+  a public sign-up flow where a new school registers with verifiable credentials, gets a
+  free one-month trial, then moves to per-term (90-day) billing. Today the app is
+  single-school-per-deployment with admin-only account creation (see Phase 1.5's landing-page
+  note); this would need real multi-tenancy decisions (shared DB with stronger tenant isolation
+  vs. per-school database), a billing/subscription state machine, and a trial-expiry enforcement
+  path — deliberately not started, flagged here so it isn't lost.
 
 ---
 

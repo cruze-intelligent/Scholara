@@ -15,7 +15,7 @@
             <div class="flex items-center gap-1">
                 <x-dropdown align="right" width="w-80">
                     <x-slot name="trigger">
-                        <button class="relative p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100" title="Notifications">
+                        <button class="relative p-2.5 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-900/5 transition-colors duration-150" title="Notifications">
                             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                             </svg>
@@ -70,7 +70,7 @@
 
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
-                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
+                        <button class="inline-flex items-center px-3 py-2 text-sm leading-4 font-medium rounded-xl text-gray-600 hover:text-gray-800 hover:bg-gray-900/5 focus:outline-none transition-colors duration-150">
                             <div>{{ Auth::user()->name }}</div>
                             <div class="ms-1">
                                 <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
@@ -116,80 +116,83 @@
             @click.outside="open = false"
             class="fixed inset-y-0 right-0 w-full sm:w-96 bg-white/90 backdrop-blur-xl shadow-2xl ring-1 ring-gray-950/5 flex flex-col">
 
-            <div class="flex items-center justify-between px-4 py-4 border-b border-gray-100">
-                <div>
-                    <div class="font-semibold text-gray-800">{{ Auth::user()->name }}</div>
-                    <div class="text-sm text-gray-500">{{ Auth::user()->email }}</div>
+            <div class="flex items-center gap-3 px-4 py-5 border-b border-gray-100 bg-gradient-to-br from-indigo-50/80 to-white">
+                <div class="h-11 w-11 rounded-full bg-indigo-600 text-white flex items-center justify-center font-semibold shadow-sm shadow-indigo-600/30">
+                    {{ collect(explode(' ', Auth::user()->name))->map(fn ($n) => $n[0] ?? '')->take(2)->implode('') }}
                 </div>
-                <button @click="open = false" aria-label="Close menu" class="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-900/5">
+                <div class="flex-1 min-w-0">
+                    <div class="font-semibold text-gray-800 truncate">{{ Auth::user()->name }}</div>
+                    <div class="text-xs text-gray-500 truncate">{{ Auth::user()->email ?? Auth::user()->phone }}</div>
+                </div>
+                <button @click="open = false" aria-label="Close menu" class="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-900/5 shrink-0">
                     <svg class="h-5 w-5" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
 
-            <div class="flex-1 overflow-y-auto px-4 py-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+            <div class="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
+            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="home">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
 
             @hasanyrole(['admin', 'teacher', 'nurse', 'bursar', 'librarian', 'hr'])
-                <x-responsive-nav-link :href="route('students.index')" :active="request()->routeIs('students.*')">{{ __('Students') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('students.index')" :active="request()->routeIs('students.*')" icon="users">{{ __('Students') }}</x-responsive-nav-link>
             @endhasanyrole
             @hasrole('admin')
-                <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">{{ __('Users') }}</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('school-settings.edit')" :active="request()->routeIs('school-settings.*')">{{ __('School Settings') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')" icon="identification">{{ __('Users') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('school-settings.edit')" :active="request()->routeIs('school-settings.*')" icon="cog">{{ __('School Settings') }}</x-responsive-nav-link>
             @endhasrole
 
             @hasanyrole(['admin', 'teacher'])
-                <p class="pt-3 pb-1 px-3 text-xs font-semibold uppercase tracking-wide text-gray-400">{{ __('Academics') }}</p>
-                <x-responsive-nav-link :href="route('assessments.index')" :active="request()->routeIs('assessments.*')">{{ __('Assessments') }}</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('attendance.create')" :active="request()->routeIs('attendance.*')">{{ __('Attendance') }}</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('notices.index')" :active="request()->routeIs('notices.*')">{{ __('Noticeboard') }}</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('reports.academics')" :active="request()->routeIs('reports.academics')">{{ __('Academic Trends') }}</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('resources.index')" :active="request()->routeIs('resources.*')">{{ __('Teaching Resources') }}</x-responsive-nav-link>
+                <p class="pt-4 pb-1 px-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">{{ __('Academics') }}</p>
+                <x-responsive-nav-link :href="route('assessments.index')" :active="request()->routeIs('assessments.*')" icon="clipboard-check">{{ __('Assessments') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('attendance.create')" :active="request()->routeIs('attendance.*')" icon="calendar">{{ __('Attendance') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('notices.index')" :active="request()->routeIs('notices.*')" icon="megaphone">{{ __('Noticeboard') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('reports.academics')" :active="request()->routeIs('reports.academics')" icon="chart-bar">{{ __('Academic Trends') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('resources.index')" :active="request()->routeIs('resources.*')" icon="book-open">{{ __('Teaching Resources') }}</x-responsive-nav-link>
             @endhasanyrole
 
             @hasrole('learner')
-                <p class="pt-3 pb-1 px-3 text-xs font-semibold uppercase tracking-wide text-gray-400">{{ __('My Records') }}</p>
-                <x-responsive-nav-link :href="route('learner.assessments')" :active="request()->routeIs('learner.assessments')">{{ __('My Assessments') }}</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('learner.attendance')" :active="request()->routeIs('learner.attendance')">{{ __('My Attendance') }}</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('learner.notices')" :active="request()->routeIs('learner.notices')">{{ __('Noticeboard') }}</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('resources.index')" :active="request()->routeIs('resources.*')">{{ __('Teaching Resources') }}</x-responsive-nav-link>
+                <p class="pt-4 pb-1 px-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">{{ __('My Records') }}</p>
+                <x-responsive-nav-link :href="route('learner.assessments')" :active="request()->routeIs('learner.assessments')" icon="clipboard-check">{{ __('My Assessments') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('learner.attendance')" :active="request()->routeIs('learner.attendance')" icon="calendar">{{ __('My Attendance') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('learner.notices')" :active="request()->routeIs('learner.notices')" icon="megaphone">{{ __('Noticeboard') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('resources.index')" :active="request()->routeIs('resources.*')" icon="book-open">{{ __('Teaching Resources') }}</x-responsive-nav-link>
             @endhasrole
 
             @hasrole('parent')
-                <p class="pt-3 pb-1 px-3 text-xs font-semibold uppercase tracking-wide text-gray-400">{{ __('My Children') }}</p>
-                <x-responsive-nav-link :href="route('resources.index')" :active="request()->routeIs('resources.*')">{{ __('Teaching Resources') }}</x-responsive-nav-link>
+                <p class="pt-4 pb-1 px-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">{{ __('My Children') }}</p>
+                <x-responsive-nav-link :href="route('resources.index')" :active="request()->routeIs('resources.*')" icon="book-open">{{ __('Teaching Resources') }}</x-responsive-nav-link>
             @endhasrole
 
             @hasanyrole(['nurse', 'admin'])
-                <p class="pt-3 pb-1 px-3 text-xs font-semibold uppercase tracking-wide text-gray-400">{{ __('Health') }}</p>
-                <x-responsive-nav-link :href="route('medications.index')" :active="request()->routeIs('medications.*')">{{ __('eMAR') }}</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('clinic-visits.index')" :active="request()->routeIs('clinic-visits.*')">{{ __('Clinic') }}</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('reports.health')" :active="request()->routeIs('reports.health')">{{ __('Health Trends') }}</x-responsive-nav-link>
+                <p class="pt-4 pb-1 px-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">{{ __('Health') }}</p>
+                <x-responsive-nav-link :href="route('medications.index')" :active="request()->routeIs('medications.*')" icon="heart-pulse">{{ __('eMAR') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('clinic-visits.index')" :active="request()->routeIs('clinic-visits.*')" icon="plus-circle">{{ __('Clinic') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('reports.health')" :active="request()->routeIs('reports.health')" icon="chart-bar">{{ __('Health Trends') }}</x-responsive-nav-link>
             @endhasanyrole
 
-            <p class="pt-3 pb-1 px-3 text-xs font-semibold uppercase tracking-wide text-gray-400">{{ __('Operations') }}</p>
-            <x-responsive-nav-link :href="route('periods.index')" :active="request()->routeIs('periods.*')">{{ __('Timetable') }}</x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('incidents.index')" :active="request()->routeIs('incidents.*')">{{ __('Issue Reports') }}</x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('gate-passes.index')" :active="request()->routeIs('gate-passes.*')">{{ __('Gate Passes') }}</x-responsive-nav-link>
+            <p class="pt-4 pb-1 px-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">{{ __('Operations') }}</p>
+            <x-responsive-nav-link :href="route('periods.index')" :active="request()->routeIs('periods.*')" icon="clock">{{ __('Timetable') }}</x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('incidents.index')" :active="request()->routeIs('incidents.*')" icon="exclamation-triangle">{{ __('Issue Reports') }}</x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('gate-passes.index')" :active="request()->routeIs('gate-passes.*')" icon="door">{{ __('Gate Passes') }}</x-responsive-nav-link>
             @hasanyrole(['bursar', 'admin'])
-                <x-responsive-nav-link :href="route('invoices.index')" :active="request()->routeIs('invoices.*')">{{ __('Invoices') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('invoices.index')" :active="request()->routeIs('invoices.*')" icon="banknotes">{{ __('Invoices') }}</x-responsive-nav-link>
             @endhasanyrole
             @hasanyrole(['hr', 'admin'])
-                <x-responsive-nav-link :href="route('payroll-runs.index')" :active="request()->routeIs('payroll-runs.*')">{{ __('Payroll') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('payroll-runs.index')" :active="request()->routeIs('payroll-runs.*')" icon="credit-card">{{ __('Payroll') }}</x-responsive-nav-link>
             @endhasanyrole
             @hasanyrole(['librarian', 'admin'])
-                <x-responsive-nav-link :href="route('inventory-items.index')" :active="request()->routeIs('inventory-items.*')">{{ __('Inventory') }}</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('book-loans.index')" :active="request()->routeIs('book-loans.*')">{{ __('Library Loans') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('inventory-items.index')" :active="request()->routeIs('inventory-items.*')" icon="archive-box">{{ __('Inventory') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('book-loans.index')" :active="request()->routeIs('book-loans.*')" icon="book-open">{{ __('Library Loans') }}</x-responsive-nav-link>
             @endhasanyrole
             @hasanyrole(['parent', 'learner'])
-                <x-responsive-nav-link :href="route('book-loans.index')" :active="request()->routeIs('book-loans.*')">{{ __('Library Loans') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('book-loans.index')" :active="request()->routeIs('book-loans.*')" icon="book-open">{{ __('Library Loans') }}</x-responsive-nav-link>
             @endhasanyrole
             @if (auth()->user()->school?->offersLevel('nursery'))
                 @hasanyrole(['teacher', 'nurse', 'admin'])
-                    <x-responsive-nav-link :href="route('daily-activity-logs.index')" :active="request()->routeIs('daily-activity-logs.*')">{{ __('Nursery') }}</x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('daily-activity-logs.index')" :active="request()->routeIs('daily-activity-logs.*')" icon="sparkles">{{ __('Nursery') }}</x-responsive-nav-link>
                 @endhasanyrole
             @endif
             </div>

@@ -109,6 +109,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('students/{student}/tags', [StudentController::class, 'storeTag'])->name('students.tags.store');
     Route::delete('student-tags/{tag}', [StudentController::class, 'destroyTag'])->name('students.tags.destroy');
 
+    // Enrollment — admin-only. Creating a student auto-provisions its guardian's login (see
+    // StudentController); editing an existing student was previously not possible anywhere.
+    Route::middleware('role:admin')->group(function () {
+        Route::get('students/create', [StudentController::class, 'create'])->name('students.create');
+        Route::post('students', [StudentController::class, 'store'])->name('students.store');
+        Route::get('students/{student}/edit', [StudentController::class, 'edit'])->name('students.edit');
+        Route::put('students/{student}', [StudentController::class, 'update'])->name('students.update');
+        Route::post('students/{student}/guardians', [StudentController::class, 'storeGuardian'])->name('students.guardians.store');
+    });
+
     // Fee payments — guardian self-serve checkout (card or mobile money via DGateway).
     // Ownership of the invoice's student is checked in the controller, not just the role.
     Route::middleware('role:parent')->group(function () {

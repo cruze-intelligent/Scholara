@@ -5,11 +5,18 @@
 
     <div class="py-12">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <form method="GET" action="{{ route('students.index') }}" class="flex gap-2">
-                <input type="text" name="search" value="{{ $search }}" placeholder="Search by name or admission number…"
-                    class="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
-                <x-primary-button type="submit">{{ __('Search') }}</x-primary-button>
-            </form>
+            <div class="flex gap-2">
+                <form method="GET" action="{{ route('students.index') }}" class="flex-1 flex gap-2">
+                    <input type="text" name="search" value="{{ $search }}" placeholder="Search by name or admission number…"
+                        class="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                    <x-primary-button type="submit">{{ __('Search') }}</x-primary-button>
+                </form>
+                @if (auth()->user()->hasRole('admin'))
+                    <a href="{{ route('students.create') }}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                        + Enroll student
+                    </a>
+                @endif
+            </div>
 
             <x-card>
                 @forelse ($students as $student)

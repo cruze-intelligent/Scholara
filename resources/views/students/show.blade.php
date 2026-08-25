@@ -1,6 +1,11 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ $student->full_name }}</h2>
+        <div class="flex items-center justify-between">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ $student->full_name }}</h2>
+            @if (auth()->user()->hasRole('admin'))
+                <a href="{{ route('students.edit', $student) }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Edit</a>
+            @endif
+        </div>
     </x-slot>
 
     <div class="py-12">

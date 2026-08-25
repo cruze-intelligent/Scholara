@@ -345,10 +345,27 @@ real-world SIS platforms. Landed so far:
       that shoved all page content down when opened ("affecting the whole screen" per feedback);
       it's now a fixed drawer with a blurred backdrop and slide transition, body scroll locked
       while open, closable via backdrop click/Escape/close button.
+- [x] **Parent accounts auto-provisioned from a student's record** — an admin no longer manually
+      creates a "parent" user; enrolling a student (`StudentController@store`, new
+      `students/create` screen — also the first real Student *edit* screen, closing a Phase 1
+      follow-up gap) requires a guardian name + phone-or-email, and a login is created
+      automatically. A sibling reuses the existing guardian account by matching phone/email
+      instead of getting a duplicate. `UserController`'s "Add User" screen no longer offers
+      `parent` as a creatable role (existing parent accounts are still editable there) — a note
+      points admins to the new Students flow instead. `users.email` is now nullable and
+      `users.phone` unique (migrations), since a phone-only guardian has no email.
+- [x] **Login accepts phone or email** — `LoginRequest::authenticate()` resolves the submitted
+      identifier as an email (via `filter_var`) or a phone number and attempts against whichever
+      column matches, so a phone-provisioned guardian isn't stuck. `StudentEnrollmentTest`
+      covers the full enroll→login path plus wrong-password rejection.
+- [x] **Nav icons + richer drawer header** — every off-canvas link now has an icon (new
+      `<x-nav-icon>` component, `<x-responsive-nav-link>` redesigned as a rounded pill,
+      active state solid indigo instead of a left border) and the drawer header shows an avatar
+      initial instead of plain text, per feedback that the nav "lacked life."
 - [ ] **Not yet built from the audit list**: staff leave management; fee structures; admin
-      dashboard KPI rollup. Also newly requested, in progress: parent accounts auto-provisioned
-      from a child's record (phone-or-email login) instead of admin-created; restyled Academic/
-      Health Trends and Manage Users pages.
+      dashboard KPI rollup. Also newly requested, still open: restyled Academic/Health Trends and
+      Manage Users pages; a future multi-tenant registration/subscription flow (free trial, then
+      per-term billing) — deliberately deferred, see docs/ROADMAP.md.
 
 ## Phase 5 — Notifications — done, see above
 

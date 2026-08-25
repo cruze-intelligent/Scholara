@@ -2,11 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Guardian;
+use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentTag;
+use App\Models\User;
 use App\Services\Academics\GradingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
@@ -48,6 +54,183 @@ class StudentController extends Controller
             ->withQueryString();
 
         return view('students.index', compact('students', 'search'));
+    }
+
+    public function create(): View
+    {
+        abort_unless(request()->user()->hasRole('admin'), 403);
+
+        return view('students.create', ['classes' => SchoolClass::orderBy('name')->get()]);
+    }
+
+    /**
+     * Admin-only enrollment — creating a student always provisions its guardian's login too
+     * (a child never exists without a parent in practice), reusing an existing parent account
+     * by phone/email when one already matches, so siblings share one login instead of getting a
+     * duplicate account each. This replaces the old flow of an admin manually adding a "parent"
+     * user and typing the child in as a side effect — see UserController, which no longer offers
+     * parent as a role to create directly.
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()->hasRole('admin'), 403);
+
+        $validated = $this->validateStudent($request);
+
+        $student = Student::create([
+            'school_id' => $request->user()->school_id,
+            'school_class_id' => $validated['school_class_id'] ?? null,
+            'admission_no' => ! empty($validated['admission_no']) ? $validated['admission_no'] : 'ADM-'.Str::upper(Str::random(6)),
+            'first_name' => $validated['first_name'],
+            'last_name' => $validated['last_name'] ?? '',
+            'dob' => $validated['dob'] ?? null,
+            'gender' => $validated['gender'] ?? 'male',
+            'curriculum_level' => $validated['curriculum_level'],
+            'photo_path' => isset($validated['photo']) ? $validated['photo']->store('photos/students', 'public') : null,
+        ]);
+
+        [$guardian, $generatedPassword] = $this->findOrCreateGuardian($request, $validated);
+        $guardian->students()->attach($student->id);
+
+        return redirect()->route('students.show', $student)->with(array_filter([
+            'status' => "{$student->full_name} enrolled.".($generatedPassword ? ' A guardian login was created.' : ' Linked to an existing guardian account.'),
+            'generatedPassword' => $generatedPassword,
+            'generatedPasswordFor' => $generatedPassword ? $guardian->user->email ?? $guardian->user->phone : null,
+        ]));
+    }
+
+    public function edit(Request $request, Student $student): View
+    {
+        abort_unless($request->user()->hasRole('admin'), 403);
+
+        $student->load('guardians.user');
+
+        return view('students.edit', ['student' => $student, 'classes' => SchoolClass::orderBy('name')->get()]);
+    }
+
+    public function update(Request $request, Student $student): RedirectResponse
+    {
+        abort_unless($request->user()->hasRole('admin'), 403);
+
+        $validated = $request->validate([
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['nullable', 'string', 'max:255'],
+            'dob' => ['nullable', 'date'],
+            'gender' => ['nullable', 'in:male,female'],
+            'curriculum_level' => ['required', 'in:nursery,primary,lower_secondary,upper_secondary'],
+            'school_class_id' => ['nullable', Rule::exists('school_classes', 'id')->where('school_id', $request->user()->school_id)],
+            'photo' => ['nullable', 'image', 'max:4096'],
+        ]);
+
+        $student->update([
+            'first_name' => $validated['first_name'],
+            'last_name' => $validated['last_name'] ?? '',
+            'dob' => $validated['dob'] ?? null,
+            'gender' => $validated['gender'] ?? $student->gender,
+            'curriculum_level' => $validated['curriculum_level'],
+            'school_class_id' => $validated['school_class_id'] ?? null,
+            ...(isset($validated['photo']) ? ['photo_path' => $validated['photo']->store('photos/students', 'public')] : []),
+        ]);
+
+        return redirect()->route('students.show', $student)->with('status', 'Student updated.');
+    }
+
+    /**
+     * Adds a second (or first, retroactive) guardian to an already-existing student — the same
+     * find-or-reuse-by-phone/email logic as enrollment, so a CSV-imported or otherwise
+     * guardian-less student can be linked from their own profile instead of only via a parent's
+     * account.
+     */
+    public function storeGuardian(Request $request, Student $student): RedirectResponse
+    {
+        abort_unless($request->user()->hasRole('admin'), 403);
+
+        $validated = $request->validate([
+            'guardian_name' => ['required', 'string', 'max:255'],
+            'guardian_phone' => ['nullable', 'string', 'max:30', 'required_without:guardian_email'],
+            'guardian_email' => ['nullable', 'email', 'max:255', 'required_without:guardian_phone'],
+            'relationship_to_student' => ['nullable', 'string', 'max:50'],
+        ]);
+
+        [$guardian] = $this->findOrCreateGuardian($request, $validated);
+        $guardian->students()->syncWithoutDetaching([$student->id]);
+
+        return redirect()->route('students.edit', $student)->with('status', 'Guardian linked.');
+    }
+
+    /**
+     * @return array{0: array<string, mixed>}
+     */
+    private function validateStudent(Request $request): array
+    {
+        return $request->validate([
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['nullable', 'string', 'max:255'],
+            'dob' => ['nullable', 'date'],
+            'gender' => ['nullable', 'in:male,female'],
+            'curriculum_level' => ['required', 'in:nursery,primary,lower_secondary,upper_secondary'],
+            'school_class_id' => ['nullable', Rule::exists('school_classes', 'id')->where('school_id', $request->user()->school_id)],
+            'admission_no' => ['nullable', 'string', 'max:50'],
+            'photo' => ['nullable', 'image', 'max:4096'],
+            'guardian_name' => ['required', 'string', 'max:255'],
+            'guardian_phone' => ['nullable', 'string', 'max:30', 'required_without:guardian_email'],
+            'guardian_email' => ['nullable', 'email', 'max:255', 'required_without:guardian_phone'],
+            'relationship_to_student' => ['nullable', 'string', 'max:50'],
+        ]);
+    }
+
+    /**
+     * Finds an existing guardian by phone or email at this school and reuses it (siblings share
+     * one login); otherwise provisions a brand-new parent account with a generated password,
+     * same one-time-reveal pattern as UserController's staff/learner creation.
+     *
+     * @param  array<string, mixed>  $validated
+     * @return array{0: Guardian, 1: ?string} [guardian, generatedPassword-or-null]
+     */
+    private function findOrCreateGuardian(Request $request, array $validated): array
+    {
+        $schoolId = $request->user()->school_id;
+        $phone = $validated['guardian_phone'] ?? null;
+        $email = $validated['guardian_email'] ?? null;
+
+        $existingUser = User::where('school_id', $schoolId)
+            ->where(function ($q) use ($phone, $email) {
+                if ($phone) {
+                    $q->orWhere('phone', $phone);
+                }
+                if ($email) {
+                    $q->orWhere('email', $email);
+                }
+            })
+            ->first();
+
+        if ($existingUser) {
+            $guardian = Guardian::firstOrCreate(
+                ['user_id' => $existingUser->id],
+                ['relationship_to_student' => $validated['relationship_to_student'] ?? 'guardian']
+            );
+
+            return [$guardian, null];
+        }
+
+        $generatedPassword = Str::password(12);
+
+        $user = User::create([
+            'school_id' => $schoolId,
+            'name' => $validated['guardian_name'],
+            'email' => $email,
+            'phone' => $phone,
+            'password' => Hash::make($generatedPassword),
+            'email_verified_at' => $email ? now() : null,
+        ]);
+        $user->assignRole('parent');
+
+        $guardian = Guardian::create([
+            'user_id' => $user->id,
+            'relationship_to_student' => $validated['relationship_to_student'] ?? 'guardian',
+        ]);
+
+        return [$guardian, $generatedPassword];
     }
 
     public function show(Request $request, Student $student, GradingService $grading): View

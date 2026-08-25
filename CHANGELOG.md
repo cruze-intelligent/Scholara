@@ -2,6 +2,22 @@
 
 Running log of what's been built, in plain language. Newest first.
 
+## 2026-08-25 (4)
+
+- Flipped how a parent account comes to exist: an admin no longer manually creates a "parent"
+  user and types the child in as a side effect. Enrolling a student now requires a guardian
+  name and phone-or-email, and a login is provisioned automatically — a sibling reuses the
+  existing guardian account (matched by phone/email) instead of getting a duplicate. This is
+  also the first real student *edit* screen (curriculum level, class, name, photo), closing a
+  gap flagged back in Phase 1. `UserController`'s "Add User" page no longer offers `parent` as
+  a role to create directly; a note points to the new enrollment flow instead. Login now
+  accepts either a phone number or an email in the same field.
+- Redesigned the nav drawer with icons on every link (new `<x-nav-icon>` component) and an
+  avatar-initial header, replacing the plain text-only list — per feedback that it "lacked
+  life."
+- 7 new tests (`StudentEnrollmentTest`), all existing `UserManagementTest` cases still passing
+  unchanged.
+
 ## 2026-08-25 (3)
 
 - Built a weekly timetable (`PeriodController`) — the app previously had no concept of *when* a
