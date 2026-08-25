@@ -30,7 +30,12 @@
                         </div>
                     </div>
 
-                    <p class="text-sm font-medium text-gray-500 mb-2">Recent assessment scores</p>
+                    <div class="flex justify-between items-center mb-2">
+                        <p class="text-sm font-medium text-gray-500">Recent assessment scores</p>
+                        <a href="{{ route('students.report-card', $student) }}" class="text-xs font-medium text-indigo-600 hover:text-indigo-800">
+                            Report card (PDF)
+                        </a>
+                    </div>
                     @forelse ($student->assessmentScores->take(5) as $score)
                         <div class="border-b border-gray-100 py-2 last:border-0 flex justify-between text-sm">
                             <span class="text-gray-700">{{ $score->assessment->type }}</span>

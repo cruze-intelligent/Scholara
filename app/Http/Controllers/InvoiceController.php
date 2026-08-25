@@ -6,11 +6,13 @@ use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Student;
 use App\Notifications\PaymentReceived;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Bursar-facing invoice management — Invoice has no BelongsToSchool scope of its own (it's tied
@@ -93,5 +95,28 @@ class InvoiceController extends Controller
         Notification::send($invoice->student->guardians->map->user->filter(), new PaymentReceived($payment));
 
         return redirect()->route('invoices.show', $invoice)->with('status', 'Payment recorded.');
+    }
+
+    /**
+     * Printable receipt — bursar/admin (their own school) or the paying guardian. Only a
+     * completed payment has anything to receipt.
+     */
+    public function receipt(Request $request, Invoice $invoice, Payment $payment): Response
+    {
+        abort_unless($payment->invoice_id === $invoice->id, 404);
+
+        $user = $request->user();
+
+        if ($user->hasAnyRole(['bursar', 'admin'])) {
+            abort_unless($invoice->student?->school_id === $user->school_id, 403);
+        } else {
+            abort_unless($user->guardian?->students()->where('students.id', $invoice->student_id)->exists(), 403);
+        }
+
+        abort_unless($payment->status === Payment::STATUS_COMPLETED, 422, 'Only a completed payment has a receipt.');
+
+        $pdf = Pdf::loadView('invoices.receipt-pdf', ['invoice' => $invoice->load('student'), 'payment' => $payment]);
+
+        return $pdf->download("receipt-{$payment->id}.pdf");
     }
 }

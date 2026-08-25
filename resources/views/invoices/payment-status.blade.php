@@ -33,6 +33,9 @@
 
                 <div x-show="status === 'completed'" class="text-green-600">
                     <p class="text-lg font-medium">{{ __('Payment received — thank you.') }}</p>
+                    <a href="{{ route('invoices.payments.receipt', [$invoice, $payment]) }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                        {{ __('Download receipt') }}
+                    </a>
                 </div>
 
                 <div x-show="status === 'failed'" class="text-red-600">

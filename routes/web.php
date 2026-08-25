@@ -22,6 +22,7 @@ use App\Http\Controllers\NoticeController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PayrollRunController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportCardController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\SchoolSettingsController;
@@ -84,6 +85,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('reports/academics', [ReportController::class, 'academics'])->name('reports.academics');
     });
 
+    // Report card PDF — admin/assigned teacher/own-child parent/self learner (checked inside
+    // the controller, since visibility genuinely differs per role here).
+    Route::get('students/{student}/report-card', [ReportCardController::class, 'show'])->name('students.report-card');
+
     // Fee payments — guardian self-serve checkout (card or mobile money via DGateway).
     // Ownership of the invoice's student is checked in the controller, not just the role.
     Route::middleware('role:parent')->group(function () {
@@ -102,6 +107,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('invoices/{invoice}/payments', [InvoiceController::class, 'recordPayment'])
             ->name('invoices.record-payment');
     });
+
+    // Receipt PDF — bursar/admin or the paying guardian (checked inside the controller).
+    Route::get('invoices/{invoice}/payments/{payment}/receipt', [InvoiceController::class, 'receipt'])
+        ->name('invoices.payments.receipt');
 
     // Learner's own full-depth views — the dashboard only shows a five-item summary of each.
     Route::middleware('role:learner')->group(function () {
@@ -177,6 +186,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('payroll-runs/{payrollRun}/generate', [PayrollRunController::class, 'generate'])
             ->name('payroll-runs.generate');
     });
+
+    // Payslip PDF — hr/admin or the staff member it belongs to (checked inside the controller).
+    Route::get('payroll-runs/{payrollRun}/payslips/{payslip}/pdf', [PayrollRunController::class, 'payslipPdf'])
+        ->name('payroll-runs.payslips.pdf');
 
     // Inventory / store
     Route::middleware('role:librarian|admin')->group(function () {

@@ -313,10 +313,18 @@ real-world SIS platforms. Landed so far:
       existing `UserController` "unlinkedStudents" flow) — an admin links a guardian afterwards
       exactly the way they would for a manually-added student. Row-level validation errors are
       collected and shown rather than failing the whole import. `StudentCsvTest`, 3 cases.
-- [ ] **Not yet built from the audit list**: PDF generation (report cards, transcripts, payslips,
-      receipts) — in progress; timetable/scheduling; library circulation (vs. generic inventory);
-      leave management; fee structures; admin dashboard KPI rollup; parent full-history views to
-      match what learner already has.
+- [x] **PDF generation** (`barryvdh/laravel-dompdf`) — three printable documents rather than
+      webpages only: report cards (`ReportCardController`, reuses `GradingService::compositeScore`
+      — the same MOT/EOT/AoI weighting the assessment screens already use — scoped to
+      admin/assigned-teacher/own-child-parent/self-learner), payslips (added to
+      `PayrollRunController`, hr/admin or the staff member themselves), and payment receipts
+      (added to `InvoiceController`, bursar/admin or the paying guardian, completed payments
+      only). Download links wired into the learner assessments page, parent dashboard, payroll
+      run show page, and both bursar/guardian payment views. `ReportCardTest` (4 cases) plus
+      new cases in `PayrollRunTest` and `InvoiceManagementTest`.
+- [ ] **Not yet built from the audit list**: timetable/scheduling; library circulation (vs.
+      generic inventory); leave management; fee structures; admin dashboard KPI rollup; parent
+      full-history views to match what learner already has.
 
 ## Phase 5 — Notifications — done, see above
 

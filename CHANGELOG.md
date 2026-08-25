@@ -2,6 +2,20 @@
 
 Running log of what's been built, in plain language. Newest first.
 
+## 2026-08-25 (2)
+
+- Added PDF generation (`barryvdh/laravel-dompdf`) — the third piece of the global-parity audit's
+  highest-leverage items: report cards, payslips, and payment receipts were all webpages-only
+  before this, meaning nobody could hand someone an actual document. Report cards
+  (`ReportCardController`) reuse `GradingService::compositeScore`, the same MOT/EOT/AoI weighting
+  the assessment screens already compute, scoped to admin/the assigned teacher/the child's own
+  parent/the learner themselves. Payslips (added to `PayrollRunController`) are downloadable by
+  hr/admin or the staff member the payslip belongs to. Receipts (added to `InvoiceController`)
+  are downloadable by bursar/admin or the guardian who made the payment, for completed payments
+  only. Download links added to the learner assessments page, parent dashboard, payroll run show
+  page, and both the bursar's and guardian's payment views.
+- 10 new tests (`ReportCardTest` plus new cases in `PayrollRunTest`/`InvoiceManagementTest`).
+
 ## 2026-08-25
 
 - Ran a global-parity audit against real-world school-management platforms (PowerSchool, Fedena,

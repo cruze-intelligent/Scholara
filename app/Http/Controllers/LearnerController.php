@@ -22,7 +22,7 @@ class LearnerController extends Controller
             ? $student->assessmentScores()->with('assessment.subject')->latest('recorded_at')->get()
             : collect();
 
-        return view('learner.assessments', compact('scores'));
+        return view('learner.assessments', compact('scores', 'student'));
     }
 
     public function attendance(Request $request): View

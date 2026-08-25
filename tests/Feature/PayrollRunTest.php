@@ -98,4 +98,47 @@ class PayrollRunTest extends TestCase
         $this->actingAs($hr)->delete(route('payroll-runs.destroy', $run))->assertStatus(422);
         $this->assertDatabaseHas('payroll_runs', ['id' => $run->id]);
     }
+
+    public function test_hr_and_the_staff_member_can_download_their_payslip_pdf(): void
+    {
+        Role::findOrCreate('hr');
+        Role::findOrCreate('teacher');
+
+        $school = School::factory()->create();
+        $hr = User::factory()->create(['school_id' => $school->id]);
+        $hr->assignRole('hr');
+
+        $staffUser = User::factory()->create(['school_id' => $school->id]);
+        $staffUser->assignRole('teacher');
+        StaffProfile::create(['user_id' => $staffUser->id, 'role_title' => 'Teacher', 'monthly_gross_salary' => 900_000]);
+
+        $run = PayrollRun::create(['school_id' => $school->id, 'period_start' => now(), 'period_end' => now()->addMonth(), 'status' => 'draft']);
+        $this->actingAs($hr)->post(route('payroll-runs.generate', $run));
+        $payslip = $run->fresh()->payslips()->first();
+
+        $this->actingAs($hr)->get(route('payroll-runs.payslips.pdf', [$run, $payslip]))->assertOk();
+        $this->actingAs($staffUser)->get(route('payroll-runs.payslips.pdf', [$run, $payslip]))->assertOk();
+    }
+
+    public function test_a_different_staff_member_cannot_download_someone_elses_payslip(): void
+    {
+        Role::findOrCreate('hr');
+        Role::findOrCreate('teacher');
+
+        $school = School::factory()->create();
+        $hr = User::factory()->create(['school_id' => $school->id]);
+        $hr->assignRole('hr');
+
+        $staffUser = User::factory()->create(['school_id' => $school->id]);
+        StaffProfile::create(['user_id' => $staffUser->id, 'role_title' => 'Teacher', 'monthly_gross_salary' => 900_000]);
+
+        $run = PayrollRun::create(['school_id' => $school->id, 'period_start' => now(), 'period_end' => now()->addMonth(), 'status' => 'draft']);
+        $this->actingAs($hr)->post(route('payroll-runs.generate', $run));
+        $payslip = $run->fresh()->payslips()->first();
+
+        $otherStaff = User::factory()->create(['school_id' => $school->id]);
+        $otherStaff->assignRole('teacher');
+
+        $this->actingAs($otherStaff)->get(route('payroll-runs.payslips.pdf', [$run, $payslip]))->assertForbidden();
+    }
 }

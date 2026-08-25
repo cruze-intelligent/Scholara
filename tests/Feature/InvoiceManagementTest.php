@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Guardian;
 use App\Models\Invoice;
+use App\Models\Payment;
 use App\Models\School;
 use App\Models\Student;
 use App\Models\User;
@@ -84,5 +86,55 @@ class InvoiceManagementTest extends TestCase
         $teacher->assignRole('teacher');
 
         $this->actingAs($teacher)->get(route('invoices.index'))->assertForbidden();
+    }
+
+    public function test_bursar_and_paying_guardian_can_download_a_receipt_for_a_completed_payment(): void
+    {
+        Role::findOrCreate('bursar');
+        Role::findOrCreate('parent');
+
+        $school = School::factory()->create();
+        $bursar = User::factory()->create(['school_id' => $school->id]);
+        $bursar->assignRole('bursar');
+        $student = Student::factory()->for($school)->create();
+
+        $parentUser = User::factory()->create(['school_id' => $school->id]);
+        $parentUser->assignRole('parent');
+        $guardian = Guardian::create(['user_id' => $parentUser->id]);
+        $guardian->students()->attach($student->id);
+
+        $invoice = Invoice::create([
+            'student_id' => $student->id, 'term' => 'Term 2 2026', 'amount_due' => 100000,
+            'due_date' => now()->addWeek(), 'status' => 'paid',
+        ]);
+        $payment = $invoice->payments()->create([
+            'amount' => 100000, 'currency' => 'UGX', 'method' => 'cash', 'status' => Payment::STATUS_COMPLETED,
+            'provider' => 'manual', 'paid_at' => now(),
+        ]);
+
+        $this->actingAs($bursar)->get(route('invoices.payments.receipt', [$invoice, $payment]))->assertOk();
+        $this->actingAs($parentUser)->get(route('invoices.payments.receipt', [$invoice, $payment]))->assertOk();
+    }
+
+    public function test_unrelated_guardian_cannot_download_someone_elses_receipt(): void
+    {
+        Role::findOrCreate('parent');
+
+        $school = School::factory()->create();
+        $student = Student::factory()->for($school)->create();
+        $invoice = Invoice::create([
+            'student_id' => $student->id, 'term' => 'Term 2 2026', 'amount_due' => 100000,
+            'due_date' => now()->addWeek(), 'status' => 'paid',
+        ]);
+        $payment = $invoice->payments()->create([
+            'amount' => 100000, 'currency' => 'UGX', 'method' => 'cash', 'status' => Payment::STATUS_COMPLETED,
+            'provider' => 'manual', 'paid_at' => now(),
+        ]);
+
+        $parentUser = User::factory()->create(['school_id' => $school->id]);
+        $parentUser->assignRole('parent');
+        Guardian::create(['user_id' => $parentUser->id]);
+
+        $this->actingAs($parentUser)->get(route('invoices.payments.receipt', [$invoice, $payment]))->assertForbidden();
     }
 }

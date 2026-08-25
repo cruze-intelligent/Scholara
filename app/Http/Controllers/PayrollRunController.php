@@ -7,9 +7,11 @@ use App\Models\PayrollRun;
 use App\Models\StaffProfile;
 use App\Services\Payroll\NssfCalculator;
 use App\Services\Payroll\PayeCalculator;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 
 class PayrollRunController extends Controller
 {
@@ -108,5 +110,26 @@ class PayrollRunController extends Controller
         $payrollRun->update(['status' => 'approved']);
 
         return back()->with('status', "Generated {$staff->count()} payslip(s).");
+    }
+
+    /**
+     * Printable payslip — hr/admin can pull anyone's, a staff member can pull their own. Not
+     * nested under the role:hr|admin route group for that reason.
+     */
+    public function payslipPdf(Request $request, PayrollRun $payrollRun, Payslip $payslip): Response
+    {
+        abort_unless($payslip->payroll_run_id === $payrollRun->id, 404);
+
+        $user = $request->user();
+
+        if (! $user->hasAnyRole(['hr', 'admin'])) {
+            abort_unless($payslip->staffProfile->user_id === $user->id, 403);
+        }
+
+        $payslip->load('staffProfile.user');
+
+        $pdf = Pdf::loadView('payroll-runs.payslip-pdf', compact('payrollRun', 'payslip'));
+
+        return $pdf->download("payslip-{$payrollRun->period_start->format('Y-m')}-{$payslip->staffProfile->user->name}.pdf");
     }
 }

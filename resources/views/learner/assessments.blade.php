@@ -5,6 +5,14 @@
 
     <div class="py-12">
         <div class="max-w-2xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            @if ($student)
+                <div class="flex justify-end">
+                    <a href="{{ route('students.report-card', $student) }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                        Download report card (PDF)
+                    </a>
+                </div>
+            @endif
+
             <x-card>
                 @forelse ($scores as $score)
                     <div class="border-b border-gray-100 py-3 last:border-0 flex justify-between items-center">

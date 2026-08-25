@@ -24,13 +24,18 @@
 
                 <p class="text-sm font-medium text-gray-500 mb-2">Payments</p>
                 @forelse ($invoice->payments as $payment)
-                    <div class="border-b border-gray-100 py-2 last:border-0 flex justify-between text-sm">
+                    <div class="border-b border-gray-100 py-2 last:border-0 flex justify-between items-center text-sm">
                         <span>{{ ucfirst($payment->method) }} &middot; {{ $payment->paid_at?->format('d M Y H:i') ?? 'pending' }}</span>
                         <span class="flex items-center gap-2">
                             {{ number_format($payment->amount, 0) }} UGX
                             <x-badge :color="match($payment->status) { 'completed' => 'green', 'failed' => 'red', default => 'yellow' }">
                                 {{ $payment->status }}
                             </x-badge>
+                            @if ($payment->status === 'completed')
+                                <a href="{{ route('invoices.payments.receipt', [$invoice, $payment]) }}" class="text-xs font-medium text-indigo-600 hover:text-indigo-800">
+                                    Receipt
+                                </a>
+                            @endif
                         </span>
                     </div>
                 @empty

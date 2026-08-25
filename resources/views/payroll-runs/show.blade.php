@@ -34,15 +34,18 @@
                     @endif
                 </div>
 
-                <div class="grid grid-cols-4 gap-2 text-xs font-semibold text-gray-500 uppercase border-b pb-2">
-                    <span>Staff</span><span>Gross</span><span>PAYE</span><span>NSSF</span>
+                <div class="grid grid-cols-5 gap-2 text-xs font-semibold text-gray-500 uppercase border-b pb-2">
+                    <span>Staff</span><span>Gross</span><span>PAYE</span><span>NSSF</span><span></span>
                 </div>
                 @forelse ($payrollRun->payslips as $payslip)
-                    <div class="grid grid-cols-4 gap-2 py-2 border-b border-gray-100 last:border-0 text-sm">
+                    <div class="grid grid-cols-5 gap-2 py-2 border-b border-gray-100 last:border-0 text-sm items-center">
                         <span>{{ $payslip->staffProfile->user->name }}</span>
                         <span>{{ number_format($payslip->gross_pay, 0) }}</span>
                         <span>{{ number_format($payslip->paye, 0) }}</span>
                         <span>{{ number_format($payslip->nssf, 0) }} &middot; net {{ number_format($payslip->net_pay, 0) }}</span>
+                        <a href="{{ route('payroll-runs.payslips.pdf', [$payrollRun, $payslip]) }}" class="text-xs font-medium text-indigo-600 hover:text-indigo-800">
+                            Download PDF
+                        </a>
                     </div>
                 @empty
                     <x-empty-state message="No payslips generated yet — staff need a monthly gross salary set first." />
