@@ -70,6 +70,64 @@ class StudentDirectoryTest extends TestCase
         $this->assertDatabaseMissing('student_tags', ['id' => $tag->id]);
     }
 
+    public function test_head_librarian_can_remove_a_tag_added_by_a_regular_librarian(): void
+    {
+        Role::findOrCreate('librarian');
+        Role::findOrCreate('head_librarian');
+
+        $school = School::factory()->create();
+        $librarian = User::factory()->create(['school_id' => $school->id]);
+        $librarian->assignRole('librarian');
+        $headLibrarian = User::factory()->create(['school_id' => $school->id]);
+        $headLibrarian->assignRole(['librarian', 'head_librarian']);
+        $student = Student::factory()->for($school)->create();
+        $tag = StudentTag::create(['school_id' => $school->id, 'student_id' => $student->id, 'tag' => 'library_defaulter', 'tagged_by' => $librarian->id]);
+
+        $this->actingAs($headLibrarian)->delete(route('students.tags.destroy', $tag))->assertRedirect();
+        $this->assertDatabaseMissing('student_tags', ['id' => $tag->id]);
+    }
+
+    public function test_regular_librarian_cannot_remove_another_librarians_tag(): void
+    {
+        Role::findOrCreate('librarian');
+
+        $school = School::factory()->create();
+        $taggingLibrarian = User::factory()->create(['school_id' => $school->id]);
+        $taggingLibrarian->assignRole('librarian');
+        $otherLibrarian = User::factory()->create(['school_id' => $school->id]);
+        $otherLibrarian->assignRole('librarian');
+        $student = Student::factory()->for($school)->create();
+        $tag = StudentTag::create(['school_id' => $school->id, 'student_id' => $student->id, 'tag' => 'library_defaulter', 'tagged_by' => $taggingLibrarian->id]);
+
+        $this->actingAs($otherLibrarian)->delete(route('students.tags.destroy', $tag))->assertForbidden();
+        $this->assertDatabaseHas('student_tags', ['id' => $tag->id]);
+    }
+
+    public function test_class_teacher_sees_homeroom_wide_analytics_a_plain_subject_teacher_cannot(): void
+    {
+        Role::findOrCreate('teacher');
+        Role::findOrCreate('class_teacher');
+
+        $school = School::factory()->create();
+        $class = \App\Models\SchoolClass::factory()->for($school)->create();
+        $classTeacher = User::factory()->create(['school_id' => $school->id]);
+        $classTeacher->assignRole(['teacher', 'class_teacher']);
+        $class->update(['teacher_id' => $classTeacher->id]);
+
+        $subjectTeacher = User::factory()->create(['school_id' => $school->id]);
+        $subjectTeacher->assignRole('teacher');
+
+        $student = Student::factory()->for($school)->create(['school_class_id' => $class->id]);
+
+        $this->actingAs($classTeacher)->get(route('students.show', $student))
+            ->assertOk()
+            ->assertViewHas('performance', fn ($performance) => $performance !== null);
+
+        $this->actingAs($subjectTeacher)->get(route('students.show', $student))
+            ->assertOk()
+            ->assertViewHas('performance', fn ($performance) => $performance === null);
+    }
+
     public function test_parent_can_view_their_own_childs_profile_with_analytics_but_not_a_strangers(): void
     {
         Role::findOrCreate('parent');

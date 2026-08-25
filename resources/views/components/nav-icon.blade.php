@@ -67,6 +67,13 @@
         @case('sparkles')
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 3.5 10.2 7 13.5 8.2 10.2 9.5 9 13l-1.2-3.5L4.5 8.2 7.8 7 9 3.5ZM17.5 12.5l.8 2.3 2.3.8-2.3.8-.8 2.3-.8-2.3-2.3-.8 2.3-.8.8-2.3Z" />
             @break
+        @case('user')
+            <circle cx="12" cy="8.5" r="3.5" stroke-linecap="round" stroke-linejoin="round" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 20a7.5 7.5 0 0 1 15 0" />
+            @break
+        @case('logout')
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 20H5.5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1H9M16.5 16l4-4-4-4M20 12H9" />
+            @break
         @default
             <circle cx="12" cy="12" r="3" />
     @endswitch

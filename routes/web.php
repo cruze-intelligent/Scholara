@@ -4,6 +4,7 @@ use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AssessmentScoreController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\BookLoanController;
+use App\Http\Controllers\CalendarEventController;
 use App\Http\Controllers\ClinicVisitController;
 use App\Http\Controllers\DailyActivityLogController;
 use App\Http\Controllers\DashboardController;
@@ -57,6 +58,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
     Route::delete('notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
     Route::delete('notifications', [NotificationController::class, 'destroyAll'])->name('notifications.destroy-all');
+
+    // Academic calendar — readable by every role, admin-authored.
+    Route::get('calendar', [CalendarEventController::class, 'index'])->name('calendar.index');
+    Route::middleware('role:admin')->group(function () {
+        Route::get('calendar/create', [CalendarEventController::class, 'create'])->name('calendar.create');
+        Route::post('calendar', [CalendarEventController::class, 'store'])->name('calendar.store');
+        Route::get('calendar/{calendarEvent}/edit', [CalendarEventController::class, 'edit'])->name('calendar.edit');
+        Route::put('calendar/{calendarEvent}', [CalendarEventController::class, 'update'])->name('calendar.update');
+        Route::delete('calendar/{calendarEvent}', [CalendarEventController::class, 'destroy'])->name('calendar.destroy');
+    });
 
     // User management — admin-only, scoped to their own school inside the controller.
     Route::middleware('role:admin')->group(function () {

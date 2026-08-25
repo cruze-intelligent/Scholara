@@ -362,9 +362,42 @@ real-world SIS platforms. Landed so far:
       `<x-nav-icon>` component, `<x-responsive-nav-link>` redesigned as a rounded pill,
       active state solid indigo instead of a left border) and the drawer header shows an avatar
       initial instead of plain text, per feedback that the nav "lacked life."
+- [x] **Restyled Academic Trends, Health Trends, Manage Users** — stat tiles (new
+      `<x-stat-tile>`), semantically color-banded score bars, role-filter pill chips and avatar
+      rows on the users list, replacing the plain card-and-table layouts.
+- [x] **Nav drawer actually opens on every device; redundant avatar-dropdown removed** —
+      `backdrop-blur-md` on the sticky top bar was making it a CSS containing block for its
+      `position: fixed` descendants (same rule as `transform`/`filter`), so the off-canvas drawer
+      — nested inside that bar — was resolving `fixed inset-y-0 right-0` against the bar's own
+      64px-tall box instead of the viewport, collapsing it into a sliver instead of opening. Fixed
+      by moving the drawer markup to be a sibling of `<nav>` rather than a descendant, both inside
+      one outer `x-data` scope. Also removed the separate avatar dropdown (Profile/Log Out) next
+      to the hamburger — that's one menu trigger doing the same job as the drawer now covers, so
+      Profile/Log Out moved into the drawer's own footer instead. Added the `[x-cloak]` CSS rule
+      that was missing from `app.css`, and confirmed Alpine is loaded via `resources/js/app.js`.
+- [x] **Distinction tags for staff roles** — "who's the class teacher," "who's the head
+      librarian," etc. are Spatie roles layered on top of a base staff role (`teacher`,
+      `librarian`, `nurse`, `hr`, `bursar`) rather than replacing it, so every existing
+      `hasRole('teacher')`-style check keeps working. An admin toggles them via checkboxes on the
+      user create/edit form (`UserController::DISTINCTION_TAGS`), independent of the base role,
+      since who holds a distinction changes over time without the account needing to be recreated.
+      Tags unlock real extra access, not just a label: a class teacher sees homeroom-wide
+      performance analytics for every student in their class (not just subjects they personally
+      teach — `StudentController::canSeeAnalytics`), gets an extra "Behaviour note" tag type, and
+      department-lead tags (`head_librarian`, `head_bursar`, `head_nurse`, `hr_manager`,
+      `head_of_department`) can remove any tag in their own department, not just ones they
+      personally added. New cases in `UserManagementTest` and `StudentDirectoryTest`.
+- [x] **Academic calendar** (`CalendarEventController`, new `CalendarEvent` model) — admin sets
+      term dates, holidays, exam periods, and deadlines; every role reads the same list from one
+      `calendar` route (no per-role gating on read), so nothing quietly assumes its own term
+      boundaries. `CalendarEventTest`, 4 cases.
+- [x] **Monetization plan converted to a repo doc** — [docs/MONETIZATION.md](./MONETIZATION.md),
+      converted from the earlier published Artifact since it wasn't reachable from this account;
+      also clarified the billing model explicitly (§3): Scholara bills the school/admin only, one
+      subscription per school covers every role, and fee collection via SchoolPay/DGateway is the
+      school's own money moving from parent to school — never a Scholara revenue stream.
 - [ ] **Not yet built from the audit list**: staff leave management; fee structures; admin
-      dashboard KPI rollup. Also newly requested, still open: restyled Academic/Health Trends and
-      Manage Users pages; a future multi-tenant registration/subscription flow (free trial, then
+      dashboard KPI rollup. A future multi-tenant registration/subscription flow (free trial, then
       per-term billing) — deliberately deferred, see docs/ROADMAP.md.
 
 ## Phase 5 — Notifications — done, see above

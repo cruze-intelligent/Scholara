@@ -2,6 +2,29 @@
 
 Running log of what's been built, in plain language. Newest first.
 
+## 2026-08-25 (6)
+
+- **Fixed the nav drawer not actually opening.** `backdrop-blur-md` on the sticky top bar made it
+  a CSS containing block for its `position: fixed` children (the same rule that applies to
+  `transform`/`filter`), so the off-canvas drawer nested inside it was positioning itself against
+  the bar's own 64px-tall box instead of the viewport. Moved the drawer to be a sibling of `<nav>`
+  instead of a descendant. Also removed the separate avatar dropdown next to the hamburger button
+  (a second menu trigger doing the same job) — Profile/Log Out now live in the drawer's footer.
+  Added the missing `[x-cloak]` CSS rule to `app.css`.
+- **Distinction tags for staff roles** — Class Teacher, Head of Department, Main Librarian, Head
+  Nurse, HR Manager, Head Bursar: Spatie roles layered on top of a base staff role rather than
+  replacing it, toggled independently via checkboxes on the user form since who holds one changes
+  over time. A class teacher gets homeroom-wide performance analytics (not just their own subject)
+  and a "Behaviour note" tag; department leads can remove any tag in their own department.
+- **Academic calendar** — admin sets term dates, holidays, exam periods, and deadlines; every
+  role reads the same list, so nothing quietly assumes its own term boundaries.
+- Converted the monetization plan from a published Artifact (unreachable from this account) into
+  [docs/MONETIZATION.md](./docs/MONETIZATION.md), and made the billing model explicit: Scholara
+  bills the school/admin only — one subscription per school covers every role — and SchoolPay fee
+  collection is the school's own money, never a Scholara revenue stream.
+- 180/180 passing (8 new: `CalendarEventTest` + new cases in `UserManagementTest`/
+  `StudentDirectoryTest`).
+
 ## 2026-08-25 (5)
 
 - Restyled Academic Trends, Health Trends, and Manage Users — per feedback that they "lack

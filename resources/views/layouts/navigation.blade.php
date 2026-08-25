@@ -3,105 +3,89 @@
     $unreadCount = $notifications->whereNull('read_at')->count();
 @endphp
 
-<nav x-data="{ open: false }" class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100/80">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
-            <a href="{{ route('dashboard') }}" class="shrink-0 flex items-center">
-                <x-application-logo class="block h-9 w-auto" />
-            </a>
+{{--
+    The off-canvas menu below is a SIBLING of <nav>, not nested inside it. `backdrop-blur-md` on
+    the sticky bar (like `transform`/`filter`) makes that element a containing block for any
+    `position: fixed` descendant — so a fixed-position drawer nested inside it resolves against
+    the 64px-tall bar instead of the viewport and never visibly opens. Keeping x-data on this
+    outer div (instead of on <nav>) keeps both siblings in the same Alpine scope without that trap.
+--}}
+<div x-data="{ open: false }">
+    <nav class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="{{ route('dashboard') }}" class="shrink-0 flex items-center">
+                    <x-application-logo class="block h-9 w-auto" />
+                </a>
 
-            <!-- Kept deliberately minimal — everything else lives behind the menu toggle so the
-                 header doesn't get crowded as more roles/modules stack up. -->
-            <div class="flex items-center gap-1">
-                <x-dropdown align="right" width="w-80">
-                    <x-slot name="trigger">
-                        <button class="relative p-2.5 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-900/5 transition-colors duration-150" title="Notifications">
-                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                            </svg>
-                            @if ($unreadCount > 0)
-                                <span class="absolute top-1 right-1 h-4 min-w-4 px-1 rounded-full bg-indigo-600 text-white text-[10px] font-medium leading-4 text-center">
-                                    {{ $unreadCount }}
-                                </span>
-                            @endif
-                        </button>
-                    </x-slot>
-
-                    <x-slot name="content">
-                        <div class="flex items-center justify-between px-4 py-2 border-b border-gray-100">
-                            <span class="text-sm font-semibold text-gray-700">{{ __('Notifications') }}</span>
-                            @if ($notifications->isNotEmpty())
-                                <div class="flex items-center gap-3 text-xs">
-                                    @if ($unreadCount > 0)
-                                        <form method="POST" action="{{ route('notifications.read-all') }}">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="text-indigo-600 hover:text-indigo-800">{{ __('Mark all read') }}</button>
-                                        </form>
-                                    @endif
-                                    <form method="POST" action="{{ route('notifications.destroy-all') }}">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-gray-400 hover:text-gray-600">{{ __('Clear all') }}</button>
-                                    </form>
-                                </div>
-                            @endif
-                        </div>
-
-                        <div class="max-h-96 overflow-y-auto">
-                            @forelse ($notifications as $notification)
-                                <div class="flex items-start gap-2 px-4 py-3 border-b border-gray-50 last:border-0 {{ $notification->read_at ? '' : 'bg-indigo-50/40' }}">
-                                    <a href="{{ $notification->data['url'] ?? route('dashboard') }}" class="flex-1 text-sm text-gray-700 hover:text-gray-900">
-                                        <p>{{ $notification->data['message'] ?? 'Notification' }}</p>
-                                        <p class="text-xs text-gray-400 mt-0.5">{{ $notification->created_at->diffForHumans() }}</p>
-                                    </a>
-                                    <form method="POST" action="{{ route('notifications.destroy', $notification->id) }}">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" title="Clear" class="text-gray-300 hover:text-gray-500 p-1">&times;</button>
-                                    </form>
-                                </div>
-                            @empty
-                                <p class="px-4 py-6 text-sm text-gray-400 text-center">{{ __("You're all caught up.") }}</p>
-                            @endforelse
-                        </div>
-                    </x-slot>
-                </x-dropdown>
-
-                <x-dropdown align="right" width="48">
-                    <x-slot name="trigger">
-                        <button class="inline-flex items-center px-3 py-2 text-sm leading-4 font-medium rounded-xl text-gray-600 hover:text-gray-800 hover:bg-gray-900/5 focus:outline-none transition-colors duration-150">
-                            <div>{{ Auth::user()->name }}</div>
-                            <div class="ms-1">
-                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                {{-- One menu trigger, not two — the hamburger drawer covers navigation, profile,
+                     and logout, so there's no separate avatar dropdown competing with it. --}}
+                <div class="flex items-center gap-1">
+                    <x-dropdown align="right" width="w-80">
+                        <x-slot name="trigger">
+                            <button class="relative p-2.5 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-900/5 transition-colors duration-150" title="Notifications">
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                                 </svg>
+                                @if ($unreadCount > 0)
+                                    <span class="absolute top-1 right-1 h-4 min-w-4 px-1 rounded-full bg-indigo-600 text-white text-[10px] font-medium leading-4 text-center">
+                                        {{ $unreadCount }}
+                                    </span>
+                                @endif
+                            </button>
+                        </x-slot>
+
+                        <x-slot name="content">
+                            <div class="flex items-center justify-between px-4 py-2 border-b border-gray-100">
+                                <span class="text-sm font-semibold text-gray-700">{{ __('Notifications') }}</span>
+                                @if ($notifications->isNotEmpty())
+                                    <div class="flex items-center gap-3 text-xs">
+                                        @if ($unreadCount > 0)
+                                            <form method="POST" action="{{ route('notifications.read-all') }}">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit" class="text-indigo-600 hover:text-indigo-800">{{ __('Mark all read') }}</button>
+                                            </form>
+                                        @endif
+                                        <form method="POST" action="{{ route('notifications.destroy-all') }}">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-gray-400 hover:text-gray-600">{{ __('Clear all') }}</button>
+                                        </form>
+                                    </div>
+                                @endif
                             </div>
-                        </button>
-                    </x-slot>
 
-                    <x-slot name="content">
-                        <x-dropdown-link :href="route('profile.edit')">{{ __('Profile') }}</x-dropdown-link>
+                            <div class="max-h-96 overflow-y-auto">
+                                @forelse ($notifications as $notification)
+                                    <div class="flex items-start gap-2 px-4 py-3 border-b border-gray-50 last:border-0 {{ $notification->read_at ? '' : 'bg-indigo-50/40' }}">
+                                        <a href="{{ $notification->data['url'] ?? route('dashboard') }}" class="flex-1 text-sm text-gray-700 hover:text-gray-900">
+                                            <p>{{ $notification->data['message'] ?? 'Notification' }}</p>
+                                            <p class="text-xs text-gray-400 mt-0.5">{{ $notification->created_at->diffForHumans() }}</p>
+                                        </a>
+                                        <form method="POST" action="{{ route('notifications.destroy', $notification->id) }}">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" title="Clear" class="text-gray-300 hover:text-gray-500 p-1">&times;</button>
+                                        </form>
+                                    </div>
+                                @empty
+                                    <p class="px-4 py-6 text-sm text-gray-400 text-center">{{ __("You're all caught up.") }}</p>
+                                @endforelse
+                            </div>
+                        </x-slot>
+                    </x-dropdown>
 
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <x-dropdown-link :href="route('logout')"
-                                    onclick="event.preventDefault(); this.closest('form').submit();">
-                                {{ __('Log Out') }}
-                            </x-dropdown-link>
-                        </form>
-                    </x-slot>
-                </x-dropdown>
-
-                <button @click="open = true" aria-label="Open menu"
-                    class="inline-flex items-center justify-center p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-900/5 focus:outline-none transition-colors duration-150">
-                    <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </button>
+                    <button @click="open = true" aria-label="Open menu"
+                        class="inline-flex items-center justify-center p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-900/5 focus:outline-none transition-colors duration-150">
+                        <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
+    </nav>
 
     <!-- Off-canvas menu — a real drawer with a blurred backdrop instead of an in-flow block that
          used to shove all page content down when opened. Body scroll is locked while open so the
@@ -134,6 +118,9 @@
             <div class="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="home">
                 {{ __('Dashboard') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('calendar.index')" :active="request()->routeIs('calendar.*')" icon="calendar">
+                {{ __('Academic Calendar') }}
             </x-responsive-nav-link>
 
             @hasanyrole(['admin', 'teacher', 'nurse', 'bursar', 'librarian', 'hr'])
@@ -196,6 +183,17 @@
                 @endhasanyrole
             @endif
             </div>
+
+            <div class="border-t border-gray-100 px-3 py-3 space-y-0.5">
+                <x-responsive-nav-link :href="route('profile.edit')" :active="request()->routeIs('profile.edit')" icon="user">{{ __('Profile') }}</x-responsive-nav-link>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors duration-150">
+                        <x-nav-icon name="logout" class="text-gray-400" />
+                        {{ __('Log Out') }}
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
-</nav>
+</div>

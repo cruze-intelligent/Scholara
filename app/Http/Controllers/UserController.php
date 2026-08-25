@@ -14,7 +14,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
-use Spatie\Permission\Models\Role;
 
 /**
  * Admin-only account management — see docs/HARDENING_TODO.md Phase 1. Every action is scoped to
@@ -23,6 +22,27 @@ use Spatie\Permission\Models\Role;
 class UserController extends Controller
 {
     private const STAFF_ROLES = ['teacher', 'nurse', 'hr', 'bursar', 'librarian'];
+
+    /** Base functional roles offered in the "Role" dropdown — 'parent' is excluded since those
+     *  accounts are auto-provisioned from student enrollment (see StudentController), but stays
+     *  valid to submit so an existing parent account can still be edited through this controller. */
+    private const BASE_ROLES = ['admin', 'teacher', 'nurse', 'hr', 'bursar', 'librarian', 'learner'];
+
+    /**
+     * Distinction tags — layered on top of a base staff role rather than replacing it, so an
+     * admin can flip one on or off independently as assignments change (this year's class
+     * teacher isn't necessarily next year's) without recreating the account. Keyed by the base
+     * role they apply to, so the form only offers the tags relevant to whichever role is picked.
+     * Each tag is itself a plain Spatie role — StudentController checks hasRole() against these
+     * names directly to gate the extra access that comes with the distinction.
+     */
+    private const DISTINCTION_TAGS = [
+        'teacher' => ['class_teacher' => 'Class Teacher', 'head_of_department' => 'Head of Department'],
+        'librarian' => ['head_librarian' => 'Main Librarian'],
+        'nurse' => ['head_nurse' => 'Head Nurse'],
+        'hr' => ['hr_manager' => 'HR Manager'],
+        'bursar' => ['head_bursar' => 'Head Bursar'],
+    ];
 
     public function index(Request $request): View
     {
@@ -49,7 +69,8 @@ class UserController extends Controller
             // Parent accounts are now provisioned automatically from a student's record (see
             // StudentController) — this screen is for staff/learner accounts only. Existing
             // parent-role users are still editable via edit() below.
-            'roles' => Role::pluck('name')->reject(fn ($role) => $role === 'parent')->values(),
+            'roles' => self::BASE_ROLES,
+            'tagsByRole' => self::DISTINCTION_TAGS,
             'unlinkedStudents' => Student::whereNull('user_id')->orderBy('first_name')->get(),
         ]);
     }
@@ -67,7 +88,7 @@ class UserController extends Controller
             'email_verified_at' => now(),
         ]);
 
-        $user->assignRole($validated['role']);
+        $user->assignRole([$validated['role'], ...($validated['tags'] ?? [])]);
 
         $this->syncRoleProfile($request, $user, $validated);
 
@@ -84,10 +105,13 @@ class UserController extends Controller
 
         $user->load('roles', 'guardian.students', 'staffProfile');
         $linkedStudent = Student::where('user_id', $user->id)->first();
+        $allTagKeys = collect(self::DISTINCTION_TAGS)->flatMap(fn ($tags) => array_keys($tags));
 
         return view('users.edit', [
             'targetUser' => $user,
-            'roles' => Role::pluck('name'),
+            'roles' => [...self::BASE_ROLES, 'parent'],
+            'tagsByRole' => self::DISTINCTION_TAGS,
+            'currentTags' => $user->roles->pluck('name')->intersect($allTagKeys)->values(),
             'students' => Student::orderBy('first_name')->get(),
             'unlinkedStudents' => Student::whereNull('user_id')
                 ->orWhere('user_id', $linkedStudent?->id)
@@ -110,7 +134,7 @@ class UserController extends Controller
             'phone' => $validated['phone'] ?? null,
         ]);
 
-        $user->syncRoles([$validated['role']]);
+        $user->syncRoles([$validated['role'], ...($validated['tags'] ?? [])]);
 
         $this->syncRoleProfile($request, $user, $validated);
 
@@ -139,7 +163,11 @@ class UserController extends Controller
                 Rule::unique('users', 'email')->ignore($editing?->id),
             ],
             'phone' => ['nullable', 'string', 'max:30'],
-            'role' => ['required', Rule::in(Role::pluck('name'))],
+            // 'parent' isn't offered on the form but stays valid so an existing parent account
+            // can still be saved through this same edit path.
+            'role' => ['required', Rule::in([...self::BASE_ROLES, 'parent'])],
+            'tags' => ['nullable', 'array'],
+            'tags.*' => [Rule::in(collect(self::DISTINCTION_TAGS)->flatMap(fn ($tags) => array_keys($tags)))],
 
             // parent — needs at least one child, either picked from child_ids or filled in via
             // the new_child_* fields; enforced below, not by a single field's required_if, since

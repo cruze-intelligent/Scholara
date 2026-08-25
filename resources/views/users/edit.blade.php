@@ -68,6 +68,8 @@
                             :options="$unlinkedStudents->pluck('full_name', 'id')" :selected="$linkedStudent?->id" />
                     </div>
 
+                    @include('users._tag-checkboxes')
+
                     <div x-show="['teacher','nurse','hr','bursar','librarian'].includes(role)" x-cloak
                         class="grid grid-cols-2 gap-3 border-t border-gray-100 pt-4">
                         <x-form.input name="trn" label="TRN (teachers)" :value="$targetUser->staffProfile?->trn" />

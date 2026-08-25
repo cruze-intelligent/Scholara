@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Assessment;
 use App\Models\AssessmentScore;
 use App\Models\AttendanceRecord;
+use App\Models\CalendarEvent;
 use App\Models\ClinicVisit;
 use App\Models\Guardian;
 use App\Models\InventoryItem;
@@ -75,7 +76,9 @@ class DemoDataSeeder extends Seeder
                 ]
             );
 
-            $user->syncRoles([$role]);
+            // The demo teacher is also the homeroom (class) teacher for Primary 5 below, so
+            // they hold both roles — demonstrates the class_teacher distinction end to end.
+            $user->syncRoles($role === 'teacher' ? [$role, 'class_teacher'] : [$role]);
 
             if ($role === 'teacher') {
                 $class->update(['teacher_id' => $user->id]);
@@ -309,5 +312,30 @@ class DemoDataSeeder extends Seeder
 
         // Referenced by nursery screens (daily logs, milestones, WOW moments).
         $nurseryStudent->guardians()->syncWithoutDetaching([$guardian->id]);
+
+        $adminUser = User::where('email', 'admin@scholara.test')->first();
+
+        CalendarEvent::firstOrCreate(
+            ['school_id' => $school->id, 'title' => 'Term 2 begins'],
+            ['created_by' => $adminUser->id, 'category' => 'term_start', 'start_date' => now()->startOfMonth()]
+        );
+        CalendarEvent::firstOrCreate(
+            ['school_id' => $school->id, 'title' => 'Mid-term break'],
+            [
+                'created_by' => $adminUser->id,
+                'category' => 'holiday',
+                'start_date' => now()->addWeeks(6),
+                'end_date' => now()->addWeeks(6)->addDays(4),
+            ]
+        );
+        CalendarEvent::firstOrCreate(
+            ['school_id' => $school->id, 'title' => 'End-of-term exams'],
+            [
+                'created_by' => $adminUser->id,
+                'category' => 'exam_period',
+                'start_date' => now()->addWeeks(11),
+                'end_date' => now()->addWeeks(11)->addDays(4),
+            ]
+        );
     }
 }

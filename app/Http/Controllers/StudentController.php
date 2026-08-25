@@ -32,10 +32,21 @@ class StudentController extends Controller
      */
     private const TAGS_BY_ROLE = [
         'librarian' => ['library_defaulter' => 'Library defaulter (overdue book/fine)'],
+        'head_librarian' => ['library_manager_flag' => 'Library management flag'],
         'bursar' => ['fee_defaulter' => 'Fee defaulter'],
+        'head_bursar' => ['fee_escalation' => 'Fee escalation'],
         'nurse' => ['medical_alert' => 'Medical alert'],
+        'head_nurse' => ['health_escalation' => 'Health escalation'],
         'teacher' => ['academic_concern' => 'Academic concern'],
+        'class_teacher' => ['behaviour_note' => 'Behaviour note (homeroom)'],
     ];
+
+    /**
+     * Department leads (a "head_*" or equivalent distinction tag) can remove any tag in their
+     * own scope, not just ones they personally added — the same authority an admin has, but
+     * limited to their department instead of every tag on the platform.
+     */
+    private const DEPARTMENT_LEAD_ROLES = ['head_librarian', 'head_bursar', 'head_nurse', 'class_teacher', 'hr_manager', 'head_of_department'];
 
     public function index(Request $request): View
     {
@@ -282,7 +293,10 @@ class StudentController extends Controller
 
     public function destroyTag(Request $request, StudentTag $tag): RedirectResponse
     {
-        abort_unless($tag->tagged_by === $request->user()->id || $request->user()->hasRole('admin'), 403);
+        $user = $request->user();
+        $isDepartmentLead = $user->hasAnyRole(self::DEPARTMENT_LEAD_ROLES);
+
+        abort_unless($tag->tagged_by === $user->id || $user->hasRole('admin') || $isDepartmentLead, 403);
 
         $tag->delete();
 
@@ -321,6 +335,13 @@ class StudentController extends Controller
         }
 
         if ($user->hasRole('teacher')) {
+            // A class teacher sees their whole homeroom's performance, not just the subjects
+            // they personally teach there — a subject teacher without that distinction only
+            // sees classes/subjects they're actually assigned to.
+            if ($user->hasRole('class_teacher') && $student->schoolClass?->teacher_id === $user->id) {
+                return true;
+            }
+
             return $user->teacherSubjectAssignments()->where('school_class_id', $student->school_class_id)->exists();
         }
 

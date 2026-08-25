@@ -197,6 +197,36 @@ class UserManagementTest extends TestCase
         $this->actingAs($teacher)->get(route('users.index'))->assertForbidden();
     }
 
+    public function test_admin_can_tag_a_teacher_as_class_teacher_and_later_remove_the_tag(): void
+    {
+        Role::findOrCreate('teacher');
+        Role::findOrCreate('class_teacher');
+        [$admin] = $this->makeAdmin();
+
+        $this->actingAs($admin)->post(route('users.store'), [
+            'name' => 'Ms Homeroom',
+            'email' => 'homeroom@example.com',
+            'role' => 'teacher',
+            'tags' => ['class_teacher'],
+        ])->assertRedirect(route('users.index'));
+
+        $teacher = User::where('email', 'homeroom@example.com')->firstOrFail();
+        $this->assertTrue($teacher->hasRole('teacher'));
+        $this->assertTrue($teacher->hasRole('class_teacher'));
+
+        // Reassigning the following year without the tag drops it — a class teacher's
+        // distinction can change without touching their base teacher role.
+        $this->actingAs($admin)->put(route('users.update', $teacher), [
+            'name' => 'Ms Homeroom',
+            'email' => 'homeroom@example.com',
+            'role' => 'teacher',
+        ])->assertRedirect(route('users.index'));
+
+        $teacher->refresh();
+        $this->assertTrue($teacher->hasRole('teacher'));
+        $this->assertFalse($teacher->hasRole('class_teacher'));
+    }
+
     public function test_admin_cannot_edit_a_user_from_another_school(): void
     {
         [$admin] = $this->makeAdmin();

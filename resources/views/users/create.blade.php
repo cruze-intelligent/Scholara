@@ -42,6 +42,8 @@
                         </p>
                     </div>
 
+                    @include('users._tag-checkboxes')
+
                     {{-- Staff roles: employment details --}}
                     <div x-show="['teacher','nurse','hr','bursar','librarian'].includes(role)" x-cloak
                         class="grid grid-cols-2 gap-3 border-t border-gray-100 pt-4">
