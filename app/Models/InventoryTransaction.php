@@ -7,7 +7,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InventoryTransaction extends Model
 {
-    protected $fillable = ['inventory_item_id', 'type', 'quantity', 'occurred_at', 'voided_at'];
+    protected $fillable = [
+        'inventory_item_id', 'type', 'quantity', 'occurred_at', 'voided_at',
+        'related_to_type', 'related_to_id',
+    ];
 
     protected $casts = [
         'occurred_at' => 'datetime',

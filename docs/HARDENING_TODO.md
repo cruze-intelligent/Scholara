@@ -322,9 +322,33 @@ real-world SIS platforms. Landed so far:
       only). Download links wired into the learner assessments page, parent dashboard, payroll
       run show page, and both bursar/guardian payment views. `ReportCardTest` (4 cases) plus
       new cases in `PayrollRunTest` and `InvoiceManagementTest`.
-- [ ] **Not yet built from the audit list**: timetable/scheduling; library circulation (vs.
-      generic inventory); leave management; fee structures; admin dashboard KPI rollup; parent
-      full-history views to match what learner already has.
+- [x] **Timetable/scheduling** (`PeriodController`, new `Period` model) — one weekly slot per
+      `teacher_subject_assignment`, with overlap checks for the same teacher, same class, and
+      same room on the same day. Visible to admin (all), teacher (own), parent/learner (their
+      child's/own class) as a day-by-day grid; only admin schedules/removes. `PeriodTest`, 4 cases.
+- [x] **Library circulation** (`BookLoanController`, new `BookLoan` model) — turns the librarian
+      role from generic inventory into a real library: borrow/return per book copy, due dates, a
+      flat per-day overdue fine (documented default, like the PAYE/NSSF rates). Reuses the
+      existing `InventoryTransaction` + observer to keep `InventoryItem.quantity` (copies on the
+      shelf) in sync, rather than a second stock-adjustment path. `BookLoanTest`, 4 cases.
+- [x] **Student directory + profile + role-scoped tagging** (`StudentController`, new
+      `StudentTag` model) — per feedback that staff need to actually look a student up by name/
+      admission number instead of every module having its own scattered picker. One profile page
+      per student with quick links to their records; a librarian/bursar/nurse/teacher can flag a
+      student from their own perspective (library defaulter, fee defaulter, medical alert,
+      academic concern — an explicit role→tag map, not free text) with admin able to add/remove
+      any. Same page also surfaces **performance over time** (composite score per subject per
+      term, across every term on record) for admin/the assigned teacher/the child's own parent/
+      the learner themselves — closes the "track one child's performance over the years" ask and
+      the parent-full-history-view gap in one page. `StudentDirectoryTest`, 5 cases.
+- [x] **Nav rewritten as a real off-canvas drawer** — the off-canvas menu was an in-flow block
+      that shoved all page content down when opened ("affecting the whole screen" per feedback);
+      it's now a fixed drawer with a blurred backdrop and slide transition, body scroll locked
+      while open, closable via backdrop click/Escape/close button.
+- [ ] **Not yet built from the audit list**: staff leave management; fee structures; admin
+      dashboard KPI rollup. Also newly requested, in progress: parent accounts auto-provisioned
+      from a child's record (phone-or-email login) instead of admin-created; restyled Academic/
+      Health Trends and Manage Users pages.
 
 ## Phase 5 — Notifications — done, see above
 

@@ -3,6 +3,7 @@
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AssessmentScoreController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\BookLoanController;
 use App\Http\Controllers\ClinicVisitController;
 use App\Http\Controllers\DailyActivityLogController;
 use App\Http\Controllers\DashboardController;
@@ -21,11 +22,13 @@ use App\Http\Controllers\MilestoneChecklistController;
 use App\Http\Controllers\NoticeController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PayrollRunController;
+use App\Http\Controllers\PeriodController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportCardController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\SchoolSettingsController;
+use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentCsvController;
 use App\Http\Controllers\StudentPhotoController;
 use App\Http\Controllers\UserController;
@@ -85,9 +88,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('reports/academics', [ReportController::class, 'academics'])->name('reports.academics');
     });
 
+    // Timetable — any authenticated role can view (scoped inside the controller); only admin
+    // schedules/removes periods.
+    Route::get('periods', [PeriodController::class, 'index'])->name('periods.index');
+    Route::middleware('role:admin')->group(function () {
+        Route::get('periods/create', [PeriodController::class, 'create'])->name('periods.create');
+        Route::post('periods', [PeriodController::class, 'store'])->name('periods.store');
+        Route::delete('periods/{period}', [PeriodController::class, 'destroy'])->name('periods.destroy');
+    });
+
     // Report card PDF — admin/assigned teacher/own-child parent/self learner (checked inside
     // the controller, since visibility genuinely differs per role here).
     Route::get('students/{student}/report-card', [ReportCardController::class, 'show'])->name('students.report-card');
+
+    // Student directory/profile — staff can look any student up by name/admission number; a
+    // guardian/learner can view their own profile page too (checked inside the controller).
+    // Tagging (defaulter flags etc.) is role-scoped per StudentController::TAGS_BY_ROLE.
+    Route::get('students', [StudentController::class, 'index'])->name('students.index');
+    Route::get('students/{student}', [StudentController::class, 'show'])->name('students.show');
+    Route::post('students/{student}/tags', [StudentController::class, 'storeTag'])->name('students.tags.store');
+    Route::delete('student-tags/{tag}', [StudentController::class, 'destroyTag'])->name('students.tags.destroy');
 
     // Fee payments — guardian self-serve checkout (card or mobile money via DGateway).
     // Ownership of the invoice's student is checked in the controller, not just the role.
@@ -199,7 +219,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('inventory-items.transactions.store');
         Route::delete('inventory-items/{inventoryItem}/transactions/{transaction}', [InventoryTransactionController::class, 'void'])
             ->name('inventory-items.transactions.void');
+
+        Route::get('book-loans/create', [BookLoanController::class, 'create'])->name('book-loans.create');
+        Route::post('book-loans', [BookLoanController::class, 'store'])->name('book-loans.store');
+        Route::patch('book-loans/{loan}/return', [BookLoanController::class, 'returnBook'])->name('book-loans.return');
     });
+
+    // Library loan history — librarian/admin see everything; a guardian/learner sees only their
+    // own (checked inside the controller).
+    Route::get('book-loans', [BookLoanController::class, 'index'])->name('book-loans.index');
 
     // Gate passes — anyone can request/view their own scope (checked in the controller);
     // approve/depart/return restricted to admin/teacher.

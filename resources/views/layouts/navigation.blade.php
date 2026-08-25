@@ -3,7 +3,7 @@
     $unreadCount = $notifications->whereNull('read_at')->count();
 @endphp
 
-<nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
+<nav x-data="{ open: false }" class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100/80">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
             <a href="{{ route('dashboard') }}" class="shrink-0 flex items-center">
@@ -93,25 +93,49 @@
                     </x-slot>
                 </x-dropdown>
 
-                <button @click="open = ! open" aria-label="Menu"
-                    class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
+                <button @click="open = true" aria-label="Open menu"
+                    class="inline-flex items-center justify-center p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-900/5 focus:outline-none transition-colors duration-150">
                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                        <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Menu — the only nav surface, at every screen width, so there's no breakpoint where the
-         wrong thing shows. Loosely grouped so a long list stays scannable. -->
-    <div x-show="open" x-cloak @click.outside="open = false" class="border-t border-gray-100">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 space-y-1">
+    <!-- Off-canvas menu — a real drawer with a blurred backdrop instead of an in-flow block that
+         used to shove all page content down when opened. Body scroll is locked while open so the
+         page behind the backdrop doesn't scroll along with it. -->
+    <div x-show="open" x-cloak @keydown.escape.window="open = false" x-effect="document.body.classList.toggle('overflow-hidden', open)" class="relative z-50">
+        <div x-show="open" x-transition:enter="transition-opacity ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+            x-transition:leave="transition-opacity ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+            @click="open = false" class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm"></div>
+
+        <div x-show="open" x-transition:enter="transition ease-out duration-300 transform" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
+            x-transition:leave="transition ease-in duration-200 transform" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full"
+            @click.outside="open = false"
+            class="fixed inset-y-0 right-0 w-full sm:w-96 bg-white/90 backdrop-blur-xl shadow-2xl ring-1 ring-gray-950/5 flex flex-col">
+
+            <div class="flex items-center justify-between px-4 py-4 border-b border-gray-100">
+                <div>
+                    <div class="font-semibold text-gray-800">{{ Auth::user()->name }}</div>
+                    <div class="text-sm text-gray-500">{{ Auth::user()->email }}</div>
+                </div>
+                <button @click="open = false" aria-label="Close menu" class="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-900/5">
+                    <svg class="h-5 w-5" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto px-4 py-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
 
+            @hasanyrole(['admin', 'teacher', 'nurse', 'bursar', 'librarian', 'hr'])
+                <x-responsive-nav-link :href="route('students.index')" :active="request()->routeIs('students.*')">{{ __('Students') }}</x-responsive-nav-link>
+            @endhasanyrole
             @hasrole('admin')
                 <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">{{ __('Users') }}</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('school-settings.edit')" :active="request()->routeIs('school-settings.*')">{{ __('School Settings') }}</x-responsive-nav-link>
@@ -147,6 +171,7 @@
             @endhasanyrole
 
             <p class="pt-3 pb-1 px-3 text-xs font-semibold uppercase tracking-wide text-gray-400">{{ __('Operations') }}</p>
+            <x-responsive-nav-link :href="route('periods.index')" :active="request()->routeIs('periods.*')">{{ __('Timetable') }}</x-responsive-nav-link>
             <x-responsive-nav-link :href="route('incidents.index')" :active="request()->routeIs('incidents.*')">{{ __('Issue Reports') }}</x-responsive-nav-link>
             <x-responsive-nav-link :href="route('gate-passes.index')" :active="request()->routeIs('gate-passes.*')">{{ __('Gate Passes') }}</x-responsive-nav-link>
             @hasanyrole(['bursar', 'admin'])
@@ -157,18 +182,16 @@
             @endhasanyrole
             @hasanyrole(['librarian', 'admin'])
                 <x-responsive-nav-link :href="route('inventory-items.index')" :active="request()->routeIs('inventory-items.*')">{{ __('Inventory') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('book-loans.index')" :active="request()->routeIs('book-loans.*')">{{ __('Library Loans') }}</x-responsive-nav-link>
+            @endhasanyrole
+            @hasanyrole(['parent', 'learner'])
+                <x-responsive-nav-link :href="route('book-loans.index')" :active="request()->routeIs('book-loans.*')">{{ __('Library Loans') }}</x-responsive-nav-link>
             @endhasanyrole
             @if (auth()->user()->school?->offersLevel('nursery'))
                 @hasanyrole(['teacher', 'nurse', 'admin'])
                     <x-responsive-nav-link :href="route('daily-activity-logs.index')" :active="request()->routeIs('daily-activity-logs.*')">{{ __('Nursery') }}</x-responsive-nav-link>
                 @endhasanyrole
             @endif
-        </div>
-
-        <div class="border-t border-gray-100 py-3">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
             </div>
         </div>
     </div>

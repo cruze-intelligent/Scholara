@@ -2,6 +2,25 @@
 
 Running log of what's been built, in plain language. Newest first.
 
+## 2026-08-25 (3)
+
+- Built a weekly timetable (`PeriodController`) — the app previously had no concept of *when* a
+  teacher teaches, only what they teach. One slot per teacher/subject/class assignment, with
+  clash checking so the same teacher, class, or room can't be double-booked on the same day.
+- Turned the librarian role from generic inventory into a real library (`BookLoanController`) —
+  borrow/return per copy, due dates, a flat per-day overdue fine. Reuses the existing inventory
+  transaction ledger to keep the shelf count in sync instead of a second stock path.
+- Built a student directory + profile page (`StudentController`) so staff can actually look a
+  student up by name/admission number, instead of every module having its own picker. The same
+  page lets a librarian/bursar/nurse/teacher flag a student from their own perspective (library
+  defaulter, fee defaulter, medical alert, academic concern), and shows a student's composite
+  score per subject per term across every term on record — "track one child's performance over
+  the years" — to admin, the assigned teacher, the child's own parent, or the learner themselves.
+- Rewrote the nav menu as a real off-canvas drawer with a blurred backdrop and slide transition —
+  the old one was an in-flow block that shoved all page content down when opened, which read as
+  dated and, per feedback, affected the whole screen.
+- 13 new tests (`PeriodTest`, `BookLoanTest`, `StudentDirectoryTest`). 165/165 passing.
+
 ## 2026-08-25 (2)
 
 - Added PDF generation (`barryvdh/laravel-dompdf`) — the third piece of the global-parity audit's
