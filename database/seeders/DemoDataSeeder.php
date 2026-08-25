@@ -31,6 +31,15 @@ class DemoDataSeeder extends Seeder
 {
     public function run(): void
     {
+        // Platform operator — no school_id, provisioned here for local dev only. In production
+        // this account is created by hand (e.g. via `php artisan tinker`), never through a
+        // public form — see RegisteredUserController, which only ever creates school admins.
+        $superAdmin = User::firstOrCreate(
+            ['email' => 'super-admin@scholara.test'],
+            ['name' => 'Demo Super Admin', 'password' => Hash::make('password'), 'email_verified_at' => now()]
+        );
+        $superAdmin->syncRoles(['super_admin']);
+
         $school = School::firstOrCreate(
             ['subdomain' => 'demo'],
             ['name' => 'Scholara Demo School', 'address' => 'Kampala, Uganda']

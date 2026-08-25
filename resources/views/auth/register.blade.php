@@ -1,51 +1,39 @@
 <x-guest-layout>
-    <form method="POST" action="{{ route('register') }}">
+    <p class="text-sm text-gray-600 mb-4">
+        {{ __('Register your school — a free 30-day trial, no card required. Your submission is reviewed before your account is activated.') }}
+    </p>
+
+    <form method="POST" action="{{ route('register') }}" class="space-y-4">
         @csrf
 
-        <!-- Name -->
         <div>
-            <x-input-label for="name" :value="__('Name')" />
-            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
-            <x-input-error :messages="$errors->get('name')" class="mt-2" />
+            <p class="text-sm font-semibold text-gray-700 mb-3">{{ __('School') }}</p>
+            <div class="space-y-3">
+                <x-form.input name="school_name" label="School name" />
+                <x-form.input name="school_address" label="Address" />
+                <x-form.input name="subdomain" label="Subdomain" placeholder="e.g. greenhill" />
+                <x-form.input name="moe_registration_number" label="Ministry of Education registration number (optional)" />
+            </div>
         </div>
 
-        <!-- Email Address -->
-        <div class="mt-4">
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        <div class="pt-4 border-t border-gray-100">
+            <p class="text-sm font-semibold text-gray-700 mb-3">{{ __('School admin (you)') }}</p>
+            <div class="space-y-3">
+                <x-form.input name="admin_name" label="Full name" />
+                <x-form.input name="admin_email" label="Email" type="email" />
+                <x-form.input name="admin_phone" label="Phone (optional)" />
+                <x-form.input name="password" label="Password" type="password" />
+                <x-form.input name="password_confirmation" label="Confirm password" type="password" />
+            </div>
         </div>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="new-password" />
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
-
-        <!-- Confirm Password -->
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
-
-            <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                            type="password"
-                            name="password_confirmation" required autocomplete="new-password" />
-
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
+        <div class="flex items-center justify-end pt-2">
             <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('login') }}">
                 {{ __('Already registered?') }}
             </a>
 
             <x-primary-button class="ms-4">
-                {{ __('Register') }}
+                {{ __('Register school') }}
             </x-primary-button>
         </div>
     </form>

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\AssessmentScoreController;
 use App\Http\Controllers\AttendanceController;
@@ -30,10 +31,12 @@ use App\Http\Controllers\ReportCardController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\SchoolSettingsController;
+use App\Http\Controllers\SchoolStatusController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentCsvController;
 use App\Http\Controllers\StreamController;
 use App\Http\Controllers\StudentPhotoController;
+use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WowMomentController;
 use Illuminate\Support\Facades\Route;
@@ -43,7 +46,7 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth', 'verified', 'school.approved'])
     ->name('dashboard');
 
 // DGateway calls this directly, unauthenticated — verified by HMAC signature inside the
@@ -54,9 +57,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Deliberately outside school.approved — this is the page a blocked school's users land on.
+    Route::get('school-status', [SchoolStatusController::class, 'show'])->name('school-status.show');
+
+    // Every role's own audit trail — what they personally did, not the whole school's.
+    Route::get('my-activity', [ActivityLogController::class, 'index'])->name('activity-log.index');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'school.approved'])->group(function () {
     Route::patch('notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
     Route::delete('notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
     Route::delete('notifications', [NotificationController::class, 'destroyAll'])->name('notifications.destroy-all');
@@ -276,6 +285,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('milestones', MilestoneChecklistController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
         Route::resource('wow-moments', WowMomentController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
     });
+});
+
+// Platform-operator territory — not nested under school.approved (a super_admin has no school
+// for that check to apply to; EnsureSchoolApproved already bypasses the role unconditionally).
+Route::middleware(['auth', 'verified', 'role:super_admin'])->prefix('super-admin')->name('super-admin.')->group(function () {
+    Route::get('schools', [SuperAdminController::class, 'schools'])->name('schools');
+    Route::post('schools/{school}/approve', [SuperAdminController::class, 'approveSchool'])->name('schools.approve');
+    Route::post('schools/{school}/reject', [SuperAdminController::class, 'rejectSchool'])->name('schools.reject');
+    Route::post('schools/{school}/suspend', [SuperAdminController::class, 'suspendSchool'])->name('schools.suspend');
+    Route::post('schools/{school}/reactivate', [SuperAdminController::class, 'reactivateSchool'])->name('schools.reactivate');
+    Route::post('schools/{school}/subscriptions', [SuperAdminController::class, 'generateSubscription'])->name('schools.subscriptions.generate');
+    Route::post('subscriptions/{subscription}/mark-paid', [SuperAdminController::class, 'markSubscriptionPaid'])->name('subscriptions.mark-paid');
+    Route::get('activity', [SuperAdminController::class, 'activity'])->name('activity');
 });
 
 require __DIR__.'/auth.php';

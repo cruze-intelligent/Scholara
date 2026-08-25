@@ -2,6 +2,33 @@
 
 Running log of what's been built, in plain language. Newest first.
 
+## 2026-08-25 (8)
+
+- **Real email verification** — `User` finally implements `MustVerifyEmail` (present but
+  commented out since day one), so the `verified` middleware already used everywhere actually
+  does something. Every admin-initiated account (staff, auto-provisioned parents) stays
+  auto-verified — the admin creating it *is* the vouching step. Only self-registration goes
+  through a real verification email, since nobody's vouched for that account yet. SMS
+  verification is explicitly not built — email/notifications only, per instruction.
+- **School self-registration** — replaced the still-live, unmodified Breeze `/register` (which
+  created a schoolless, roleless user) with the real flow: school details + a Ministry of
+  Education registration number (documented placeholder, verify the real requirement) + the
+  registering admin's own details. The school starts pending review with a generated reference
+  number; nothing works until a super admin approves it and the admin verifies their email.
+- **Subscription model** — 3,000 UGX per enrolled student per 90-day period, one free 30-day
+  trial from approval. No payment gateway exists for this direction yet (school pays Scholara,
+  distinct from SchoolPay/DGateway which is the school collecting its own fees from parents), so
+  billing periods and marking them paid are manual super-admin actions for now.
+- **Super admin** — a platform-operator role with no school of its own, provisioned by hand
+  (never through a public form). Reviews and approves/rejects new school registrations,
+  suspends/reactivates a school, manages subscription billing, and sees platform-wide metrics —
+  deliberately aggregate-only (school counts, student counts, revenue), never a raw per-student
+  browse into any individual school's records.
+- **Activity logs** — the audit-trail machinery that's been quietly writing since day one
+  (health/financial record changes) finally has somewhere to read it back: every role gets "My
+  Activity" (what they personally did), and super admin gets the platform-wide, cross-school view.
+- 200/200 passing.
+
 ## 2026-08-25 (7)
 
 - **Role-access audit**: HR could browse the student directory, every gate pass, and every

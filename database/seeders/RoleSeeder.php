@@ -11,6 +11,8 @@ class RoleSeeder extends Seeder
      * Roles from docs/ARCHITECTURE.md's role model.
      */
     public const ROLES = [
+        // Platform operator — not tied to any school (school_id null); see SuperAdminController.
+        'super_admin',
         'admin',
         'teacher',
         // Distinction tags — layered on top of a base functional role (a class teacher is

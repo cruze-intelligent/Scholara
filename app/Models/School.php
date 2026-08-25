@@ -6,16 +6,31 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class School extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'address', 'subdomain', 'settings', 'logo_path'];
+    // 'pending_review' (self-registered, awaiting super-admin approval), 'trial' (approved,
+    // inside its free trial_ends_at window), 'active' (manually activated or covered by a paid
+    // SchoolSubscription — see isAccessible()), 'suspended', 'rejected'.
+    public const STATUSES = ['pending_review', 'trial', 'active', 'suspended', 'rejected'];
+
+    protected $fillable = [
+        'name', 'address', 'subdomain', 'settings', 'logo_path',
+        'registration_number', 'moe_registration_number', 'status', 'trial_ends_at',
+    ];
 
     protected $casts = [
         'settings' => 'array',
+        'trial_ends_at' => 'datetime',
     ];
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(SchoolSubscription::class);
+    }
 
     public function users(): HasMany
     {
@@ -83,5 +98,46 @@ class School extends Model
         $contents = base64_encode(Storage::disk('public')->get($this->logo_path));
 
         return "data:{$mime};base64,{$contents}";
+    }
+
+    /**
+     * Whether anyone at this school (other than a super_admin, who isn't tied to a school at
+     * all) should be let past EnsureSchoolApproved into the real app right now. 'active' is a
+     * manual override; a 'trial' school is fine until its trial ends, after which — and for a
+     * status of 'active' with no manual flag either — it needs a SchoolSubscription that's
+     * actually paid and covers today. pending_review/suspended/rejected are always blocked.
+     */
+    public function isAccessible(): bool
+    {
+        if (in_array($this->status, ['pending_review', 'suspended', 'rejected'], true)) {
+            return false;
+        }
+
+        if ($this->status === 'active') {
+            return true;
+        }
+
+        // status === 'trial': fine inside the trial window; past it, needs a paid subscription
+        // covering today (status itself is never auto-flipped to 'active' on payment — this is
+        // computed live instead of relying on a scheduled job to run).
+        if ($this->trial_ends_at?->isFuture()) {
+            return true;
+        }
+
+        return $this->subscriptions->contains(fn (SchoolSubscription $sub) => $sub->coversToday());
+    }
+
+    /**
+     * A short, unique reference for this school — assigned once, at registration. Not
+     * sequential/guessable on purpose (this is shown back to the registrant as "your school's
+     * number," not an internal primary key).
+     */
+    public static function generateRegistrationNumber(): string
+    {
+        do {
+            $candidate = 'SCH-'.strtoupper(Str::random(6));
+        } while (self::where('registration_number', $candidate)->exists());
+
+        return $candidate;
     }
 }

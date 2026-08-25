@@ -245,7 +245,12 @@ class StudentController extends Controller
             'email' => $email,
             'phone' => $phone,
             'password' => Hash::make($generatedPassword),
-            'email_verified_at' => $email ? now() : null,
+            // Admin-vouched at creation (same as UserController's staff/learner accounts) rather
+            // than sent through the real email-verification flow — that flow is reserved for
+            // self-registration, where nobody has vouched for the registrant yet. A phone-only
+            // guardian has no email to verify regardless, so this also keeps them from being
+            // locked out by the `verified` middleware now that MustVerifyEmail is active.
+            'email_verified_at' => now(),
         ]);
         $user->assignRole('parent');
 

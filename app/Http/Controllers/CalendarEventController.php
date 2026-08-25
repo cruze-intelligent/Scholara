@@ -16,6 +16,10 @@ class CalendarEventController extends Controller
 {
     public function index(Request $request): View
     {
+        // A super_admin has no school_id, so BelongsToSchool's scope wouldn't filter this query
+        // at all — every school's dates mixed together. Not their concern; keep them out.
+        abort_if($request->user()->hasRole('super_admin'), 403);
+
         $today = today();
 
         $events = CalendarEvent::orderBy('start_date')->get();

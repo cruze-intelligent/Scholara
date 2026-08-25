@@ -10,7 +10,9 @@ use App\Models\Invoice;
 use App\Models\LessonPlan;
 use App\Models\Notice;
 use App\Models\PayrollRun;
+use App\Models\School;
 use App\Models\SchoolClass;
+use App\Models\SchoolSubscription;
 use App\Models\StaffProfile;
 use App\Models\Student;
 use App\Models\User;
@@ -38,12 +40,16 @@ class DashboardController extends Controller
             'hr' => $this->hrData($user),
             'bursar' => $this->bursarData($user),
             'librarian' => $this->librarianData($user),
+            'super_admin' => $this->superAdminData(),
             default => [],
         };
 
-        // Pinned-calendar preview, shared across every role's dashboard (see dashboards._pinned).
-        $data['upcomingEvents'] = CalendarEvent::where('start_date', '>=', today())
-            ->orderBy('start_date')->take(5)->get();
+        // Pinned-calendar preview, shared across every role's dashboard (see dashboards._pinned)
+        // — skipped for super_admin, who has no single school for it to make sense against.
+        if ($role !== 'super_admin') {
+            $data['upcomingEvents'] = CalendarEvent::where('start_date', '>=', today())
+                ->orderBy('start_date')->take(5)->get();
+        }
 
         return view($view, $data);
     }
@@ -134,6 +140,24 @@ class DashboardController extends Controller
     {
         return [
             'items' => InventoryItem::orderBy('quantity')->get(),
+        ];
+    }
+
+    /**
+     * Aggregate/grouped only — see SuperAdminController's class doc comment for why this never
+     * runs a raw per-student query despite a super_admin's school_id being null (which would
+     * otherwise leave BelongsToSchool's scope wide open).
+     */
+    private function superAdminData(): array
+    {
+        return [
+            'schoolCounts' => School::query()->selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status'),
+            'totalStudents' => Student::count(),
+            'totalSchools' => School::count(),
+            'pendingSchools' => School::where('status', 'pending_review')->latest()->take(5)->get(),
+            'revenueThisTerm' => SchoolSubscription::where('status', 'paid')
+                ->where('period_start', '<=', today())->where('period_end', '>=', today())
+                ->sum('amount'),
         ];
     }
 

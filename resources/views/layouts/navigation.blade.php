@@ -119,9 +119,18 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="home">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+
+            @hasrole('super_admin')
+                <p class="pt-4 pb-1 px-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">{{ __('Platform') }}</p>
+                <x-responsive-nav-link :href="route('super-admin.schools')" :active="request()->routeIs('super-admin.schools*')" icon="identification">{{ __('Schools') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('super-admin.activity')" :active="request()->routeIs('super-admin.activity')" icon="chart-bar">{{ __('Platform Activity') }}</x-responsive-nav-link>
+            @endhasrole
+
+            @unlessrole('super_admin')
             <x-responsive-nav-link :href="route('calendar.index')" :active="request()->routeIs('calendar.*')" icon="calendar">
                 {{ __('Academic Calendar') }}
             </x-responsive-nav-link>
+            @endunlessrole
 
             {{-- HR manages staff, not students — deliberately excluded here. --}}
             @hasanyrole(['admin', 'teacher', 'nurse', 'bursar', 'librarian'])
@@ -196,6 +205,7 @@
                     <x-nav-icon x-show="$store.theme.dark" name="sun" class="text-gray-400" x-cloak />
                     <span x-text="$store.theme.dark ? '{{ __('Light mode') }}' : '{{ __('Dark mode') }}'"></span>
                 </button>
+                <x-responsive-nav-link :href="route('activity-log.index')" :active="request()->routeIs('activity-log.*')" icon="clipboard-check">{{ __('My Activity') }}</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('profile.edit')" :active="request()->routeIs('profile.edit')" icon="user">{{ __('Profile') }}</x-responsive-nav-link>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf

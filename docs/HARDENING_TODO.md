@@ -433,11 +433,54 @@ real-world SIS platforms. Landed so far:
       unpinned the same way. `PinnedItemTest`, 3 cases.
 - [ ] **Not yet built from the audit list**: staff leave management; fee structures; admin
       dashboard KPI rollup.
-- [ ] **Not yet built, explicitly requested**: school self-registration with verified details,
-      a 3,000 UGX/student/90-day subscription (one free month, then flagged pending
-      super-admin approval), email-only verification (SMS deferred), and a super-admin section
-      for platform-wide metrics/activity logs. Large enough to track as its own phase — see
-      Phase 10 below.
+
+## Phase 10 — Self-registration, subscriptions, super admin
+
+- [x] **Real email verification, finally activated** — `User` now implements `MustVerifyEmail`
+      (the interface import was present but commented out since Phase 0), which makes the
+      `verified` middleware already used everywhere actually enforce something. Every existing
+      account-creation path (`UserController`, `StudentController`'s guardian provisioning) sets
+      `email_verified_at` at creation — an admin creating the account *is* the vouching step, no
+      separate email round-trip needed. The one path that leaves it null is self-registration
+      below, since nobody has vouched for that account yet. SMS verification is explicitly
+      deferred (per instruction) — no SMS anywhere in this phase.
+- [x] **School self-registration** (`RegisteredUserController`, rewritten) — the stock,
+      unmodified Breeze `/register` route was still live and created a schoolless, roleless user
+      that nothing else in the app expected; replaced with the real flow instead of adding a
+      parallel route. Collects school name/address/subdomain/a Ministry of Education registration
+      number (documented placeholder, like PAYE/NSSF — verify the real requirement), and the
+      registering admin's own details. Creates the school with a generated
+      `registration_number` and `status = 'pending_review'`, and the admin with
+      `email_verified_at = null` — both gates (verify your email, then wait for super-admin
+      approval) have to clear before the school is usable. `SchoolRegistrationTest`.
+- [x] **Subscription model** (`SchoolSubscription`, `SuperAdminController`) — 3,000 UGX per
+      enrolled student per 90-day period (`RATE_PER_STUDENT_UGX`), one free 30-day trial from
+      approval (`School::trial_ends_at`). `School::isAccessible()` computes access live (trial
+      window, or a `SchoolSubscription` marked paid covering today) rather than depending on a
+      scheduled job to flip a status — there's no cron guaranteed to run here. There's no payment
+      gateway wired for this direction (school pays Scholara) the way SchoolPay/DGateway handles
+      a parent paying the school's own fees, so generating a billing period and marking it paid
+      are manual super-admin actions for now — documented as such, not hidden as if automated.
+- [x] **`EnsureSchoolApproved` middleware** — blocks a school's users into a `school-status` page
+      explaining why (pending review / rejected / suspended / trial expired) whenever
+      `isAccessible()` is false; a super_admin (no `school_id`) always passes through.
+- [x] **Super admin** (`super_admin` role, `SuperAdminController`) — a platform operator, not
+      scoped to any school (`school_id = null`, so `BelongsToSchool`'s scope never filters their
+      queries). Deliberately kept to aggregate/grouped queries only in every controller/view —
+      school counts by status, platform-wide student *count*, revenue this term — never a raw
+      per-student browse, the same discipline docs/COMPLIANCE.md asks of every other role.
+      Reviews/approves/rejects pending registrations, suspends/reactivates a school, generates and
+      marks subscription periods paid. Not self-serve — provisioned by hand (`DemoDataSeeder` for
+      local dev only; production is a manual `tinker` step), since a public "become platform
+      operator" form would be a real security hole.
+- [x] **Activity logs** (`ActivityLogController`, `SuperAdminController::activity()`) — the
+      existing `AuditLog`/`Auditable` machinery (writing since Phase 0, on health/financial
+      records) had no read-side UI at all until now. Every role gets "My Activity" — what THEY
+      personally did; super_admin additionally gets a platform-wide, cross-school view.
+      `SuperAdminTest`.
+- [ ] Not yet built: a real per-school "who am I as admin" activity view (today an admin only
+      sees their own personal actions via My Activity, not their whole school's) — deliberately
+      out of scope for this pass since it wasn't asked for; flag if wanted.
 
 ## Phase 5 — Notifications — done, see above
 
