@@ -26,12 +26,21 @@ class UserController extends Controller
 
     public function index(Request $request): View
     {
+        $roleFilter = $request->query('role');
+
         $users = User::with('roles')
             ->where('school_id', $request->user()->school_id)
+            ->when($roleFilter, fn ($q) => $q->whereHas('roles', fn ($r) => $r->where('name', $roleFilter)))
             ->orderBy('name')
             ->get();
 
-        return view('users.index', compact('users'));
+        $allUsers = $roleFilter ? User::with('roles')->where('school_id', $request->user()->school_id)->get() : $users;
+
+        return view('users.index', [
+            'users' => $users,
+            'roleFilter' => $roleFilter,
+            'roleCounts' => $allUsers->flatMap->roles->countBy('name'),
+        ]);
     }
 
     public function create(): View

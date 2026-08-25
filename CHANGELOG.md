@@ -2,6 +2,18 @@
 
 Running log of what's been built, in plain language. Newest first.
 
+## 2026-08-25 (5)
+
+- Restyled Academic Trends, Health Trends, and Manage Users — per feedback that they "lack
+  life." Academic/Health Trends get a stat-tile row (new `<x-stat-tile>` component) summarizing
+  the page before the detail, and academic score bars are now color-coded by performance band
+  (green/amber/red) instead of flat indigo. Manage Users gets avatar-initial circles, role-filter
+  pills so the list isn't one undifferentiated blob, and a lighter action bar (Add User as the
+  one primary button, CSV import/export demoted to small text links) — addressing the "don't
+  take over the page" feedback.
+- 172/172 passing (no new tests — pure styling/filter-UI, verified against the existing
+  `UserManagementTest`/`ReportTest`/`DashboardTest` coverage).
+
 ## 2026-08-25 (4)
 
 - Flipped how a parent account comes to exist: an admin no longer manually creates a "parent"
