@@ -1,6 +1,9 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Inventory') }}</h2>
+        <div class="flex items-center justify-between">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Inventory') }}</h2>
+            <x-pin-toggle pin-key="inventory-items.index" />
+        </div>
     </x-slot>
 
     <div class="py-12">
@@ -20,8 +23,18 @@
                     <div class="border-b border-gray-100 py-3 last:border-0">
                         <div class="flex justify-between items-center mb-2">
                             <a href="{{ route('inventory-items.show', $item) }}" class="hover:text-indigo-600">
-                                <p class="font-medium">{{ $item->name }}</p>
-                                <p class="text-sm text-gray-500">{{ ucfirst($item->category) }} &middot; {{ $item->quantity }} {{ $item->unit }}</p>
+                                <p class="font-medium">
+                                    {{ $item->name }}
+                                    @if ($item->category === 'library' && $item->author)
+                                        <span class="text-gray-400 font-normal">&middot; {{ $item->author }}</span>
+                                    @endif
+                                </p>
+                                <p class="text-sm text-gray-500">
+                                    {{ ucfirst($item->category) }} &middot; {{ $item->quantity }} {{ $item->unit }}
+                                    @if ($item->category === 'library' && $item->isbn)
+                                        &middot; ISBN {{ $item->isbn }}
+                                    @endif
+                                </p>
                             </a>
                             <form method="POST" action="{{ route('inventory-items.transactions.store', $item) }}" class="flex gap-2 items-center">
                                 @csrf

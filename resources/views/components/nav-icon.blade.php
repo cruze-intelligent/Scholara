@@ -74,6 +74,17 @@
         @case('logout')
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 20H5.5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1H9M16.5 16l4-4-4-4M20 12H9" />
             @break
+        @case('sun')
+            <circle cx="12" cy="12" r="4" stroke-linecap="round" stroke-linejoin="round" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2M12 19v2M5 5l1.4 1.4M17.6 17.6 19 19M3 12h2M19 12h2M5 19l1.4-1.4M17.6 6.4 19 5" />
+            @break
+        @case('moon')
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z" />
+            @break
+        @case('pin')
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3.5c-2.5 0-4.5 2-4.5 4.5 0 3 4.5 8.5 4.5 8.5s4.5-5.5 4.5-8.5c0-2.5-2-4.5-4.5-4.5Z" />
+            <circle cx="12" cy="8" r="1.6" stroke-linecap="round" stroke-linejoin="round" />
+            @break
         @default
             <circle cx="12" cy="12" r="3" />
     @endswitch

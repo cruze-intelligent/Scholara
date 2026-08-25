@@ -55,4 +55,16 @@ class User extends Authenticatable
     {
         return $this->hasMany(TeacherSubjectAssignment::class, 'teacher_id');
     }
+
+    public function pinnedItems(): HasMany
+    {
+        return $this->hasMany(PinnedItem::class);
+    }
+
+    public function hasPinned(string $key): bool
+    {
+        return $this->relationLoaded('pinnedItems')
+            ? $this->pinnedItems->contains('key', $key)
+            : $this->pinnedItems()->where('key', $key)->exists();
+    }
 }

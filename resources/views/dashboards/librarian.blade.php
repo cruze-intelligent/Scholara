@@ -7,6 +7,7 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            @include('dashboards._pinned')
             <div class="flex justify-end">
                 <a href="{{ route('inventory-items.index') }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
                     Manage inventory &rarr;

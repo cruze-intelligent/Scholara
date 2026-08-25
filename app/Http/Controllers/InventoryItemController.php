@@ -28,6 +28,7 @@ class InventoryItemController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'quantity' => ['required', 'integer', 'min:0'],
             'unit' => ['required', 'string', 'max:50'],
+            ...$this->catalogueRules(),
         ]);
 
         InventoryItem::create($validated);
@@ -56,6 +57,7 @@ class InventoryItemController extends Controller
             'category' => ['required', 'in:library,canteen,equipment'],
             'name' => ['required', 'string', 'max:255'],
             'unit' => ['required', 'string', 'max:50'],
+            ...$this->catalogueRules(),
         ]);
 
         // quantity is deliberately not editable here — it's derived from the transaction ledger
@@ -73,5 +75,22 @@ class InventoryItemController extends Controller
         $inventory_item->delete();
 
         return redirect()->route('inventory-items.index')->with('status', 'Item deleted.');
+    }
+
+    /**
+     * Catalogue fields only make sense for a library book — left null (and simply unused) for
+     * canteen/equipment rows rather than forced empty strings.
+     *
+     * @return array<string, array<int, string>>
+     */
+    private function catalogueRules(): array
+    {
+        return [
+            'author' => ['nullable', 'string', 'max:255'],
+            'isbn' => ['nullable', 'string', 'max:20'],
+            'publisher' => ['nullable', 'string', 'max:255'],
+            'edition_year' => ['nullable', 'integer', 'min:1000', 'max:9999'],
+            'shelf_location' => ['nullable', 'string', 'max:50'],
+        ];
     }
 }

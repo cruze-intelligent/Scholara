@@ -78,6 +78,8 @@
                             :value="$targetUser->staffProfile?->hire_date?->toDateString()" />
                         <x-form.input name="monthly_gross_salary" label="Monthly gross salary" type="number"
                             :value="$targetUser->staffProfile?->monthly_gross_salary" />
+                        <x-form.select name="stream_id" label="Stream (optional)"
+                            :options="collect(['' => '—'])->merge($streams->pluck('name', 'id'))" :selected="$targetUser->staffProfile?->stream_id" />
                         @if ($targetUser->staffProfile?->photo_url)
                             <div class="col-span-2 flex items-center gap-3">
                                 <img src="{{ $targetUser->staffProfile->photo_url }}" alt="" class="h-12 w-12 rounded-full object-cover">

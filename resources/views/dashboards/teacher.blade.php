@@ -7,6 +7,7 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            @include('dashboards._pinned')
             <x-card title="My classes">
                 @forelse ($classes as $class)
                     <div class="border-b border-gray-100 py-2.5 last:border-0 flex justify-between items-center">

@@ -6,12 +6,22 @@
     <div class="py-12">
         <div class="max-w-xl mx-auto sm:px-6 lg:px-8">
             <x-card>
-                <form method="POST" action="{{ route('inventory-items.update', $inventoryItem) }}" class="space-y-4">
+                <form method="POST" action="{{ route('inventory-items.update', $inventoryItem) }}"
+                    x-data="{ category: '{{ old('category', $inventoryItem->category) }}' }" class="space-y-4">
                     @csrf
                     @method('PUT')
-                    <x-form.select name="category" label="Category" :selected="$inventoryItem->category"
+                    <x-form.select name="category" label="Category" x-model="category"
                         :options="['library' => 'Library', 'canteen' => 'Canteen', 'equipment' => 'Equipment']" />
                     <x-form.input name="name" label="Name" :value="$inventoryItem->name" />
+
+                    <div x-show="category === 'library'" x-cloak class="grid grid-cols-2 gap-3 border-t border-gray-100 pt-4">
+                        <div class="col-span-2"><x-form.input name="author" label="Author" :value="$inventoryItem->author" /></div>
+                        <x-form.input name="isbn" label="ISBN" :value="$inventoryItem->isbn" />
+                        <x-form.input name="publisher" label="Publisher" :value="$inventoryItem->publisher" />
+                        <x-form.input name="edition_year" label="Edition year" type="number" :value="$inventoryItem->edition_year" />
+                        <x-form.input name="shelf_location" label="Shelf location" :value="$inventoryItem->shelf_location" />
+                    </div>
+
                     <x-form.input name="unit" label="Unit" :value="$inventoryItem->unit" />
                     <p class="text-sm text-gray-500">
                         Quantity ({{ $inventoryItem->quantity }} {{ $inventoryItem->unit }}) isn't edited here — record a

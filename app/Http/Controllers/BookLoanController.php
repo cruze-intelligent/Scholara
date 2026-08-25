@@ -33,6 +33,10 @@ class BookLoanController extends Controller
             $query->whereIn('student_id', $studentIds);
         } elseif ($user->hasRole('learner')) {
             $query->where('student_id', Student::where('user_id', $user->id)->value('id'));
+        } else {
+            // Browsing every student's loan history is librarian/admin territory — matches who
+            // can actually issue/return a book (see routes/web.php's role:librarian|admin group).
+            abort_unless($user->hasAnyRole(['admin', 'librarian']), 403);
         }
 
         return view('book-loans.index', ['loans' => $query->latest('borrowed_at')->paginate(20)]);

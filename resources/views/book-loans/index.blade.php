@@ -1,6 +1,9 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Library Loans') }}</h2>
+        <div class="flex items-center justify-between">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Library Loans') }}</h2>
+            <x-pin-toggle pin-key="book-loans.index" />
+        </div>
     </x-slot>
 
     <div class="py-12">

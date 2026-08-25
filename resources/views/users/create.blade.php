@@ -51,6 +51,8 @@
                         <x-form.input name="role_title" label="Job title" />
                         <x-form.input name="hire_date" label="Hire date" type="date" />
                         <x-form.input name="monthly_gross_salary" label="Monthly gross salary" type="number" />
+                        <x-form.select name="stream_id" label="Stream (optional)"
+                            :options="collect(['' => '—'])->merge($streams->pluck('name', 'id'))" />
                         <x-form.input name="photo" label="ID photo (optional)" type="file" accept="image/*" />
                     </div>
 

@@ -23,6 +23,8 @@
                             :selected="$student->curriculum_level" />
                         <x-form.select name="school_class_id" label="Class"
                             :options="collect(['' => '—'])->merge($classes->pluck('name', 'id'))" :selected="$student->school_class_id" />
+                        <x-form.select name="stream_id" label="Stream (optional)"
+                            :options="collect(['' => '—'])->merge($streams->pluck('name', 'id'))" :selected="$student->stream_id" />
                         <div class="col-span-2"><x-form.input name="photo" label="Photo (optional)" type="file" accept="image/*" /></div>
                     </div>
 

@@ -20,6 +20,8 @@
                                 :options="['nursery' => 'Nursery', 'primary' => 'Primary', 'lower_secondary' => 'Lower Secondary', 'upper_secondary' => 'Upper Secondary']" />
                             <x-form.select name="school_class_id" label="Class (optional)"
                                 :options="collect(['' => '—'])->merge($classes->pluck('name', 'id'))" />
+                            <x-form.select name="stream_id" label="Stream (optional)"
+                                :options="collect(['' => '—'])->merge($streams->pluck('name', 'id'))" />
                             <div class="col-span-2"><x-form.input name="admission_no" label="Admission no. (optional, auto-generated)" /></div>
                             <div class="col-span-2"><x-form.input name="photo" label="Photo (optional)" type="file" accept="image/*" /></div>
                         </div>

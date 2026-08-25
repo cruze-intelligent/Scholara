@@ -14,6 +14,22 @@
                     <div>
                         <p class="text-sm text-gray-500">{{ ucfirst($inventoryItem->category) }}</p>
                         <p class="text-2xl font-semibold text-gray-800">{{ $inventoryItem->quantity }} {{ $inventoryItem->unit }}</p>
+                        @if ($inventoryItem->category === 'library' && ($inventoryItem->author || $inventoryItem->isbn))
+                            <dl class="mt-3 text-sm text-gray-600 space-y-0.5">
+                                @if ($inventoryItem->author)
+                                    <div><dt class="inline text-gray-400">Author:</dt> <dd class="inline">{{ $inventoryItem->author }}</dd></div>
+                                @endif
+                                @if ($inventoryItem->isbn)
+                                    <div><dt class="inline text-gray-400">ISBN:</dt> <dd class="inline">{{ $inventoryItem->isbn }}</dd></div>
+                                @endif
+                                @if ($inventoryItem->publisher)
+                                    <div><dt class="inline text-gray-400">Publisher:</dt> <dd class="inline">{{ $inventoryItem->publisher }}{{ $inventoryItem->edition_year ? ' ('.$inventoryItem->edition_year.')' : '' }}</dd></div>
+                                @endif
+                                @if ($inventoryItem->shelf_location)
+                                    <div><dt class="inline text-gray-400">Shelf:</dt> <dd class="inline">{{ $inventoryItem->shelf_location }}</dd></div>
+                                @endif
+                            </dl>
+                        @endif
                     </div>
                     <div class="flex items-center gap-3">
                         <a href="{{ route('inventory-items.edit', $inventoryItem) }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Edit</a>

@@ -396,9 +396,48 @@ real-world SIS platforms. Landed so far:
       also clarified the billing model explicitly (§3): Scholara bills the school/admin only, one
       subscription per school covers every role, and fee collection via SchoolPay/DGateway is the
       school's own money moving from parent to school — never a Scholara revenue stream.
+- [x] **Role-access audit** — HR had student-directory access despite managing staff, not
+      students (dropped from `StudentController::STAFF_ROLES`); HR/bursar/librarian could also
+      browse every gate pass and every incident report school-wide (including anonymous bullying/
+      violence reports) since those `index()` actions only ever scoped for parent/learner, never
+      for irrelevant staff — `GatePassController`/`IncidentReportController` now restrict the
+      "browse everyone's" view to admin/teacher/nurse, and HR sees only incidents they personally
+      filed. `BookLoanController::index()` similarly restricted to admin/librarian. New cases in
+      `GatePassTest`, `BookLoanTest`, `IncidentReportTest`, `StudentDirectoryTest`.
+- [x] **Dark mode** — toggle in the nav drawer footer (`Alpine.store('theme')`, persisted to
+      `localStorage`, pre-paint inline script in both layouts to avoid a flash of the wrong
+      theme). Rather than hand-adding `dark:` variants across ~80 existing Blade views, `app.css`
+      re-targets Tailwind's own generated utility classes as CSS hooks under a `.dark` selector
+      (`darkMode: 'selector'`) — gives the whole app working dark coverage from one pass; the nav
+      itself also got precise `dark:` variants for its opacity-modified classes the blanket CSS
+      can't reach.
+- [x] **Streams** (`StreamController`, new `Stream` model) — a lightweight identification label
+      ("Blue", "Green") a student or teacher can be attached to, separate from their actual class
+      — admin-managed at `/streams`. Deliberately not a second class hierarchy; see the model's
+      doc comment. `StreamTest`, 3 cases.
+- [x] **School logo on generated documents** — admin uploads a logo in School Settings
+      (`School::logoDataUri()`, embedded as base64 since dompdf can't reliably fetch by URL
+      outside a real request); report cards, payslips, and receipts now share one
+      `resources/views/pdf/_header.blade.php` + `_styles.blade.php` pair instead of three
+      near-duplicate layouts, closing the "make all other documents standard" ask.
+- [x] **Library catalogue** — author/ISBN/publisher/edition year/shelf location added to
+      `InventoryItem` (nullable, library-only), shown on the book-loan picker, item list, and
+      item page. Kept on the existing table rather than a parallel `books` model so the
+      circulation machinery (`BookLoanController`, `InventoryTransactionObserver`) didn't need to
+      change. `InventoryItemTest` extended.
+- [x] **Dashboard pins** (`PinnedItemController`, new `PinnedItem` model,
+      `App\Support\PinnableTabs` registry) — the Academic Calendar now previews on every role's
+      dashboard by default, dismissible with a × (stored as a `calendar_dismissed` pin row, one
+      per user); a `<x-pin-toggle>` button on Academic/Health Trends, Payroll, Invoices, Library
+      Loans, and Inventory lets any user pin that tab as a quick shortcut on their own dashboard,
+      unpinned the same way. `PinnedItemTest`, 3 cases.
 - [ ] **Not yet built from the audit list**: staff leave management; fee structures; admin
-      dashboard KPI rollup. A future multi-tenant registration/subscription flow (free trial, then
-      per-term billing) — deliberately deferred, see docs/ROADMAP.md.
+      dashboard KPI rollup.
+- [ ] **Not yet built, explicitly requested**: school self-registration with verified details,
+      a 3,000 UGX/student/90-day subscription (one free month, then flagged pending
+      super-admin approval), email-only verification (SMS deferred), and a super-admin section
+      for platform-wide metrics/activity logs. Large enough to track as its own phase — see
+      Phase 10 below.
 
 ## Phase 5 — Notifications — done, see above
 

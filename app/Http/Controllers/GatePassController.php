@@ -16,6 +16,11 @@ use Illuminate\View\View;
  */
 class GatePassController extends Controller
 {
+    // Who can see/manage gate passes for students in general — a student leaving campus is
+    // admin/teacher/nurse territory, not HR/bursar/librarian's. Parent/learner are handled
+    // separately below since they're always scoped to their own child/self regardless.
+    private const STAFF_ROLES = ['admin', 'teacher', 'nurse'];
+
     public function index(Request $request): View
     {
         $user = $request->user();
@@ -26,6 +31,8 @@ class GatePassController extends Controller
             $query->whereIn('student_id', $studentIds);
         } elseif ($user->hasRole('learner')) {
             $query->where('student_id', Student::where('user_id', $user->id)->value('id'));
+        } else {
+            abort_unless($user->hasAnyRole(self::STAFF_ROLES), 403);
         }
 
         return view('gate-passes.index', ['gatePasses' => $query->paginate(15)]);
@@ -40,6 +47,7 @@ class GatePassController extends Controller
         } elseif ($user->hasRole('learner')) {
             $students = Student::where('user_id', $user->id)->get();
         } else {
+            abort_unless($user->hasAnyRole(self::STAFF_ROLES), 403);
             $students = Student::orderBy('first_name')->get();
         }
 
@@ -61,6 +69,8 @@ class GatePassController extends Controller
         } elseif ($user->hasRole('learner')) {
             $allowed = Student::where('user_id', $user->id)->where('id', $validated['student_id'])->exists();
             abort_unless($allowed, 403);
+        } else {
+            abort_unless($user->hasAnyRole(self::STAFF_ROLES), 403);
         }
 
         GatePass::create([

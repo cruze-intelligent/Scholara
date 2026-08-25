@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Guardian;
 use App\Models\SchoolClass;
+use App\Models\Stream;
 use App\Models\Student;
 use App\Models\StaffProfile;
 use App\Models\User;
@@ -71,6 +72,7 @@ class UserController extends Controller
             // parent-role users are still editable via edit() below.
             'roles' => self::BASE_ROLES,
             'tagsByRole' => self::DISTINCTION_TAGS,
+            'streams' => Stream::orderBy('name')->get(),
             'unlinkedStudents' => Student::whereNull('user_id')->orderBy('first_name')->get(),
         ]);
     }
@@ -112,6 +114,7 @@ class UserController extends Controller
             'roles' => [...self::BASE_ROLES, 'parent'],
             'tagsByRole' => self::DISTINCTION_TAGS,
             'currentTags' => $user->roles->pluck('name')->intersect($allTagKeys)->values(),
+            'streams' => Stream::orderBy('name')->get(),
             'students' => Student::orderBy('first_name')->get(),
             'unlinkedStudents' => Student::whereNull('user_id')
                 ->orWhere('user_id', $linkedStudent?->id)
@@ -197,6 +200,7 @@ class UserController extends Controller
             'photo' => ['nullable', 'image', 'max:4096'],
             'hire_date' => ['nullable', 'date'],
             'monthly_gross_salary' => ['nullable', 'numeric', 'min:0'],
+            'stream_id' => ['nullable', Rule::exists('streams', 'id')->where('school_id', $request->user()->school_id)],
         ]);
 
         $validator->after(function ($validator) use ($request) {
@@ -272,6 +276,7 @@ class UserController extends Controller
                     'role_title' => $validated['role_title'] ?? ucfirst($validated['role']),
                     'hire_date' => $validated['hire_date'] ?? now(),
                     'monthly_gross_salary' => $validated['monthly_gross_salary'] ?? null,
+                    'stream_id' => $validated['stream_id'] ?? null,
                     // Keep the existing photo when no new one is uploaded on an edit.
                     ...(isset($photoPath) ? ['photo_path' => $photoPath] : []),
                 ]

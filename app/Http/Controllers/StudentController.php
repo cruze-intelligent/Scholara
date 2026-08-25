@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Guardian;
 use App\Models\SchoolClass;
+use App\Models\Stream;
 use App\Models\Student;
 use App\Models\StudentTag;
 use App\Models\User;
@@ -24,7 +25,8 @@ use Illuminate\View\View;
  */
 class StudentController extends Controller
 {
-    private const STAFF_ROLES = ['admin', 'teacher', 'nurse', 'bursar', 'librarian', 'hr'];
+    // HR manages staff, not students — deliberately excluded (see docs/HARDENING_TODO.md).
+    private const STAFF_ROLES = ['admin', 'teacher', 'nurse', 'bursar', 'librarian'];
 
     /**
      * Which role can attach which tag — kept as an explicit map rather than free text, so a
@@ -71,7 +73,10 @@ class StudentController extends Controller
     {
         abort_unless(request()->user()->hasRole('admin'), 403);
 
-        return view('students.create', ['classes' => SchoolClass::orderBy('name')->get()]);
+        return view('students.create', [
+            'classes' => SchoolClass::orderBy('name')->get(),
+            'streams' => Stream::orderBy('name')->get(),
+        ]);
     }
 
     /**
@@ -91,6 +96,7 @@ class StudentController extends Controller
         $student = Student::create([
             'school_id' => $request->user()->school_id,
             'school_class_id' => $validated['school_class_id'] ?? null,
+            'stream_id' => $validated['stream_id'] ?? null,
             'admission_no' => ! empty($validated['admission_no']) ? $validated['admission_no'] : 'ADM-'.Str::upper(Str::random(6)),
             'first_name' => $validated['first_name'],
             'last_name' => $validated['last_name'] ?? '',
@@ -116,7 +122,11 @@ class StudentController extends Controller
 
         $student->load('guardians.user');
 
-        return view('students.edit', ['student' => $student, 'classes' => SchoolClass::orderBy('name')->get()]);
+        return view('students.edit', [
+            'student' => $student,
+            'classes' => SchoolClass::orderBy('name')->get(),
+            'streams' => Stream::orderBy('name')->get(),
+        ]);
     }
 
     public function update(Request $request, Student $student): RedirectResponse
@@ -130,6 +140,7 @@ class StudentController extends Controller
             'gender' => ['nullable', 'in:male,female'],
             'curriculum_level' => ['required', 'in:nursery,primary,lower_secondary,upper_secondary'],
             'school_class_id' => ['nullable', Rule::exists('school_classes', 'id')->where('school_id', $request->user()->school_id)],
+            'stream_id' => ['nullable', Rule::exists('streams', 'id')->where('school_id', $request->user()->school_id)],
             'photo' => ['nullable', 'image', 'max:4096'],
         ]);
 
@@ -140,6 +151,7 @@ class StudentController extends Controller
             'gender' => $validated['gender'] ?? $student->gender,
             'curriculum_level' => $validated['curriculum_level'],
             'school_class_id' => $validated['school_class_id'] ?? null,
+            'stream_id' => $validated['stream_id'] ?? null,
             ...(isset($validated['photo']) ? ['photo_path' => $validated['photo']->store('photos/students', 'public')] : []),
         ]);
 
@@ -181,6 +193,7 @@ class StudentController extends Controller
             'gender' => ['nullable', 'in:male,female'],
             'curriculum_level' => ['required', 'in:nursery,primary,lower_secondary,upper_secondary'],
             'school_class_id' => ['nullable', Rule::exists('school_classes', 'id')->where('school_id', $request->user()->school_id)],
+            'stream_id' => ['nullable', Rule::exists('streams', 'id')->where('school_id', $request->user()->school_id)],
             'admission_no' => ['nullable', 'string', 'max:50'],
             'photo' => ['nullable', 'image', 'max:4096'],
             'guardian_name' => ['required', 'string', 'max:255'],

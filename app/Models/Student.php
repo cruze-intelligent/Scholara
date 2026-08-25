@@ -16,7 +16,7 @@ class Student extends Model
     use BelongsToSchool, HasFactory;
 
     protected $fillable = [
-        'school_id', 'user_id', 'school_class_id', 'admission_no', 'first_name',
+        'school_id', 'user_id', 'school_class_id', 'stream_id', 'admission_no', 'first_name',
         'last_name', 'dob', 'gender', 'curriculum_level', 'photo_path',
     ];
 
@@ -37,6 +37,11 @@ class Student extends Model
     public function schoolClass(): BelongsTo
     {
         return $this->belongsTo(SchoolClass::class);
+    }
+
+    public function stream(): BelongsTo
+    {
+        return $this->belongsTo(Stream::class);
     }
 
     public function guardians(): BelongsToMany

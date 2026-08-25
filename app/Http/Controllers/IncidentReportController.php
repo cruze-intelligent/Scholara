@@ -11,6 +11,11 @@ use Illuminate\View\View;
 
 class IncidentReportController extends Controller
 {
+    // Who can triage/browse every incident report school-wide — child-protection-sensitive
+    // (bullying/violence, some anonymous), so kept to the same set that can pick an arbitrary
+    // student when filing one below. Anyone else only ever sees reports they personally filed.
+    private const TRIAGE_ROLES = ['admin', 'teacher', 'nurse'];
+
     public function index(Request $request): View
     {
         $user = $request->user();
@@ -21,6 +26,8 @@ class IncidentReportController extends Controller
             $query->whereIn('student_id', $studentIds);
         } elseif ($user->hasRole('learner')) {
             $query->where('student_id', Student::where('user_id', $user->id)->value('id'));
+        } elseif (! $user->hasAnyRole(self::TRIAGE_ROLES)) {
+            $query->where('reporter_id', $user->id);
         }
 
         return view('incidents.index', ['incidents' => $query->paginate(15)]);
@@ -28,7 +35,7 @@ class IncidentReportController extends Controller
 
     public function create(Request $request): View
     {
-        $students = $request->user()->hasAnyRole(['admin', 'teacher', 'nurse'])
+        $students = $request->user()->hasAnyRole(self::TRIAGE_ROLES)
             ? Student::orderBy('first_name')->get()
             : collect();
 
@@ -62,7 +69,7 @@ class IncidentReportController extends Controller
         abort_unless($incident->reporter_id === $request->user()->id, 403);
         abort_if($incident->status !== 'open', 422, 'This report is already being triaged and can no longer be edited.');
 
-        $students = $request->user()->hasAnyRole(['admin', 'teacher', 'nurse'])
+        $students = $request->user()->hasAnyRole(self::TRIAGE_ROLES)
             ? Student::orderBy('first_name')->get()
             : collect();
 

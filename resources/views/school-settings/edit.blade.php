@@ -17,9 +17,26 @@
                     everyone's navigation once it's unchecked here.
                 </p>
 
-                <form method="POST" action="{{ route('school-settings.update') }}" class="space-y-4">
+                <form method="POST" action="{{ route('school-settings.update') }}" enctype="multipart/form-data" class="space-y-4">
                     @csrf
                     @method('PUT')
+
+                    <div class="pb-4 border-b border-gray-100">
+                        <x-input-label value="School logo" />
+                        <p class="text-xs text-gray-500 mt-0.5 mb-2">
+                            Appears on every generated document — report cards, payslips, receipts.
+                        </p>
+                        @if ($school->logo_url)
+                            <div class="flex items-center gap-3 mb-2">
+                                <img src="{{ $school->logo_url }}" alt="" class="h-14 w-14 rounded-lg object-contain ring-1 ring-gray-200 bg-white">
+                                <label class="flex items-center gap-2 text-sm text-red-600">
+                                    <input type="checkbox" name="remove_logo" value="1" class="rounded border-gray-300 text-red-600 shadow-sm focus:ring-red-500">
+                                    Remove logo
+                                </label>
+                            </div>
+                        @endif
+                        <x-form.input name="logo" type="file" accept="image/*" />
+                    </div>
 
                     <div class="space-y-2">
                         @foreach ($availableLevels as $level)

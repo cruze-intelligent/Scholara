@@ -11,7 +11,7 @@
     outer div (instead of on <nav>) keeps both siblings in the same Alpine scope without that trap.
 --}}
 <div x-data="{ open: false }">
-    <nav class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100/80">
+    <nav class="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-100/80 dark:border-gray-800/80">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <a href="{{ route('dashboard') }}" class="shrink-0 flex items-center">
@@ -98,9 +98,9 @@
         <div x-show="open" x-transition:enter="transition ease-out duration-300 transform" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
             x-transition:leave="transition ease-in duration-200 transform" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full"
             @click.outside="open = false"
-            class="fixed inset-y-0 right-0 w-full sm:w-96 bg-white/90 backdrop-blur-xl shadow-2xl ring-1 ring-gray-950/5 flex flex-col">
+            class="fixed inset-y-0 right-0 w-full sm:w-96 bg-white/90 dark:bg-gray-900/95 backdrop-blur-xl shadow-2xl ring-1 ring-gray-950/5 dark:ring-white/10 flex flex-col">
 
-            <div class="flex items-center gap-3 px-4 py-5 border-b border-gray-100 bg-gradient-to-br from-indigo-50/80 to-white">
+            <div class="flex items-center gap-3 px-4 py-5 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-br from-indigo-50/80 to-white dark:from-indigo-950/40 dark:to-gray-900">
                 <div class="h-11 w-11 rounded-full bg-indigo-600 text-white flex items-center justify-center font-semibold shadow-sm shadow-indigo-600/30">
                     {{ collect(explode(' ', Auth::user()->name))->map(fn ($n) => $n[0] ?? '')->take(2)->implode('') }}
                 </div>
@@ -123,12 +123,14 @@
                 {{ __('Academic Calendar') }}
             </x-responsive-nav-link>
 
-            @hasanyrole(['admin', 'teacher', 'nurse', 'bursar', 'librarian', 'hr'])
+            {{-- HR manages staff, not students — deliberately excluded here. --}}
+            @hasanyrole(['admin', 'teacher', 'nurse', 'bursar', 'librarian'])
                 <x-responsive-nav-link :href="route('students.index')" :active="request()->routeIs('students.*')" icon="users">{{ __('Students') }}</x-responsive-nav-link>
             @endhasanyrole
             @hasrole('admin')
                 <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')" icon="identification">{{ __('Users') }}</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('school-settings.edit')" :active="request()->routeIs('school-settings.*')" icon="cog">{{ __('School Settings') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('streams.index')" :active="request()->routeIs('streams.*')" icon="identification">{{ __('Streams') }}</x-responsive-nav-link>
             @endhasrole
 
             @hasanyrole(['admin', 'teacher'])
@@ -163,7 +165,10 @@
             <p class="pt-4 pb-1 px-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">{{ __('Operations') }}</p>
             <x-responsive-nav-link :href="route('periods.index')" :active="request()->routeIs('periods.*')" icon="clock">{{ __('Timetable') }}</x-responsive-nav-link>
             <x-responsive-nav-link :href="route('incidents.index')" :active="request()->routeIs('incidents.*')" icon="exclamation-triangle">{{ __('Issue Reports') }}</x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('gate-passes.index')" :active="request()->routeIs('gate-passes.*')" icon="door">{{ __('Gate Passes') }}</x-responsive-nav-link>
+            {{-- HR/bursar/librarian have no operational reason to manage a student leaving campus. --}}
+            @hasanyrole(['admin', 'teacher', 'nurse', 'parent', 'learner'])
+                <x-responsive-nav-link :href="route('gate-passes.index')" :active="request()->routeIs('gate-passes.*')" icon="door">{{ __('Gate Passes') }}</x-responsive-nav-link>
+            @endhasanyrole
             @hasanyrole(['bursar', 'admin'])
                 <x-responsive-nav-link :href="route('invoices.index')" :active="request()->routeIs('invoices.*')" icon="banknotes">{{ __('Invoices') }}</x-responsive-nav-link>
             @endhasanyrole
@@ -184,7 +189,13 @@
             @endif
             </div>
 
-            <div class="border-t border-gray-100 px-3 py-3 space-y-0.5">
+            <div class="border-t border-gray-100 dark:border-gray-800 px-3 py-3 space-y-0.5">
+                <button type="button" @click="$store.theme.toggle()"
+                    class="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-900/5 dark:hover:bg-white/5 transition-colors duration-150">
+                    <x-nav-icon x-show="!$store.theme.dark" name="moon" class="text-gray-400" />
+                    <x-nav-icon x-show="$store.theme.dark" name="sun" class="text-gray-400" x-cloak />
+                    <span x-text="$store.theme.dark ? '{{ __('Light mode') }}' : '{{ __('Dark mode') }}'"></span>
+                </button>
                 <x-responsive-nav-link :href="route('profile.edit')" :active="request()->routeIs('profile.edit')" icon="user">{{ __('Profile') }}</x-responsive-nav-link>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CalendarEvent;
 use App\Models\ClinicVisit;
 use App\Models\IncidentReport;
 use App\Models\InventoryItem;
@@ -23,11 +24,12 @@ class DashboardController extends Controller
     public function index(Request $request): View
     {
         $user = $request->user();
+        $user->load('pinnedItems');
         $role = $user->getRoleNames()->first() ?? 'learner';
 
         $view = "dashboards.{$role}";
 
-        return view($view, match ($role) {
+        $data = match ($role) {
             'admin' => $this->adminData($user),
             'teacher' => $this->teacherData($user),
             'parent' => $this->parentData($user),
@@ -37,7 +39,13 @@ class DashboardController extends Controller
             'bursar' => $this->bursarData($user),
             'librarian' => $this->librarianData($user),
             default => [],
-        });
+        };
+
+        // Pinned-calendar preview, shared across every role's dashboard (see dashboards._pinned).
+        $data['upcomingEvents'] = CalendarEvent::where('start_date', '>=', today())
+            ->orderBy('start_date')->take(5)->get();
+
+        return view($view, $data);
     }
 
     private function adminData(User $user): array

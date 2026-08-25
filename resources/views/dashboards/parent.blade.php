@@ -7,6 +7,7 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            @include('dashboards._pinned')
             @forelse ($students as $student)
                 <x-card>
                     <div class="flex items-center gap-4 mb-4">

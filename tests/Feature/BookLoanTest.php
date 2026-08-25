@@ -78,6 +78,17 @@ class BookLoanTest extends TestCase
         ])->assertStatus(422);
     }
 
+    public function test_hr_cannot_browse_the_full_loans_list(): void
+    {
+        Role::findOrCreate('hr');
+
+        $school = School::factory()->create();
+        $hr = User::factory()->create(['school_id' => $school->id]);
+        $hr->assignRole('hr');
+
+        $this->actingAs($hr)->get(route('book-loans.index'))->assertForbidden();
+    }
+
     public function test_parent_only_sees_their_own_childs_loans(): void
     {
         Role::findOrCreate('parent');

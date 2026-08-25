@@ -5,3 +5,131 @@
 [x-cloak] {
     display: none !important;
 }
+
+/*
+ * Dark mode, applied via a `dark` class on <html> (see the toggle in navigation.blade.php and
+ * the pre-paint script in both layouts) rather than per-component `dark:` utility variants —
+ * the app's ~80 Blade views were written against a fixed light palette before dark mode existed,
+ * so this re-targets Tailwind's own generated utility classes as CSS hooks instead of touching
+ * every view individually. Covers the utilities actually used across the app (see the class
+ * frequency this was built from); a genuinely new page should still prefer real `dark:` variants
+ * where convenient, but everything already written gets a working dark theme from this alone.
+ */
+.dark body,
+.dark .bg-gray-100 {
+    background-color: #0e0f13;
+}
+.dark .bg-white {
+    background-color: #1a1c23;
+}
+.dark .bg-gray-50 {
+    background-color: #15161c;
+}
+.dark .bg-gray-200 {
+    background-color: #2a2c36;
+}
+.dark .bg-gray-900\/5,
+.dark .hover\:bg-gray-900\/5:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.dark .text-gray-900,
+.dark .text-gray-800 {
+    color: #f1f2f6;
+}
+.dark .text-gray-700 {
+    color: #d7d9e2;
+}
+.dark .text-gray-600 {
+    color: #b7b9c8;
+}
+.dark .text-gray-500 {
+    color: #999bad;
+}
+.dark .text-gray-400 {
+    color: #74768a;
+}
+.dark .text-gray-300 {
+    color: #5b5d70;
+}
+
+.dark .border-gray-100,
+.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) {
+    border-color: #262832;
+}
+.dark .border-gray-200 {
+    border-color: #2e3039;
+}
+.dark .border-gray-300 {
+    border-color: #3a3c48;
+}
+.dark .ring-gray-950\/5 {
+    --tw-ring-color: rgba(255, 255, 255, 0.08);
+}
+.dark .ring-black.ring-opacity-5 {
+    --tw-ring-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Indigo text darkens toward black on a dark ground otherwise — lighten it, keep filled
+   indigo-600 buttons as-is since white-on-indigo-600 stays legible either way. */
+.dark .text-indigo-600 {
+    color: #a5b0fb;
+}
+.dark .text-indigo-700,
+.dark .text-indigo-800 {
+    color: #c1c9fd;
+}
+.dark .bg-indigo-50 {
+    background-color: #211f3d;
+}
+.dark .bg-indigo-100 {
+    background-color: #262454;
+}
+
+.dark .text-red-500,
+.dark .text-red-600 {
+    color: #f3908d;
+}
+.dark .text-red-700,
+.dark .text-red-800 {
+    color: #f7b0ad;
+}
+.dark .bg-red-50 {
+    background-color: #331b1b;
+}
+
+.dark .text-green-600 {
+    color: #6fd6a8;
+}
+.dark .text-green-700,
+.dark .text-green-800 {
+    color: #93e0bd;
+}
+
+.dark .text-yellow-700,
+.dark .text-amber-700,
+.dark .text-amber-800 {
+    color: #f3cd7a;
+}
+.dark .bg-amber-50 {
+    background-color: #362a11;
+}
+.dark .ring-amber-200 {
+    --tw-ring-color: #5a4620;
+}
+
+.dark .text-blue-700 {
+    color: #93b8f5;
+}
+
+.dark input,
+.dark select,
+.dark textarea {
+    background-color: #1a1c23;
+    color: #f1f2f6;
+    border-color: #3a3c48;
+}
+.dark input::placeholder,
+.dark textarea::placeholder {
+    color: #74768a;
+}

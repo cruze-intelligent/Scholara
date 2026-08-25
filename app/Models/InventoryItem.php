@@ -11,7 +11,10 @@ class InventoryItem extends Model
 {
     use BelongsToSchool;
 
-    protected $fillable = ['school_id', 'category', 'name', 'quantity', 'unit'];
+    protected $fillable = [
+        'school_id', 'category', 'name', 'quantity', 'unit',
+        'author', 'isbn', 'publisher', 'edition_year', 'shelf_location',
+    ];
 
     public function school(): BelongsTo
     {

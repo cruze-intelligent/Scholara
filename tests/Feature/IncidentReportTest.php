@@ -93,6 +93,37 @@ class IncidentReportTest extends TestCase
         $this->actingAs($parent)->get(route('incidents.edit', $incident))->assertStatus(422);
     }
 
+    public function test_hr_only_sees_reports_they_personally_filed_not_the_whole_school(): void
+    {
+        Role::findOrCreate('hr');
+        Role::findOrCreate('admin');
+        $school = School::factory()->create();
+        $hr = User::factory()->create(['school_id' => $school->id]);
+        $hr->assignRole('hr');
+        $admin = User::factory()->create(['school_id' => $school->id]);
+        $admin->assignRole('admin');
+
+        $this->actingAs($admin)->post(route('incidents.store'), ['category' => 'other', 'description' => 'Not HRs.']);
+        $this->actingAs($hr)->post(route('incidents.store'), ['category' => 'other', 'description' => 'HRs own report.']);
+
+        $response = $this->actingAs($hr)->get(route('incidents.index'));
+
+        $response->assertViewHas('incidents', fn ($incidents) => $incidents->total() === 1);
+    }
+
+    public function test_hr_cannot_pick_an_arbitrary_student_when_filing_a_report(): void
+    {
+        Role::findOrCreate('hr');
+        $school = School::factory()->create();
+        $hr = User::factory()->create(['school_id' => $school->id]);
+        $hr->assignRole('hr');
+        \App\Models\Student::factory()->for($school)->create();
+
+        $response = $this->actingAs($hr)->get(route('incidents.create'));
+
+        $response->assertViewHas('students', fn ($students) => $students->isEmpty());
+    }
+
     public function test_only_admin_can_delete_a_report(): void
     {
         Role::findOrCreate('parent');

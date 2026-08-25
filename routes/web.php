@@ -24,6 +24,7 @@ use App\Http\Controllers\NoticeController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PayrollRunController;
 use App\Http\Controllers\PeriodController;
+use App\Http\Controllers\PinnedItemController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportCardController;
 use App\Http\Controllers\ReportController;
@@ -31,6 +32,7 @@ use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\SchoolSettingsController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentCsvController;
+use App\Http\Controllers\StreamController;
 use App\Http\Controllers\StudentPhotoController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WowMomentController;
@@ -59,6 +61,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
     Route::delete('notifications', [NotificationController::class, 'destroyAll'])->name('notifications.destroy-all');
 
+    // Dashboard pins — every role, scoped to the acting user's own pins inside the controller.
+    Route::post('pins/{key}', [PinnedItemController::class, 'store'])->name('pins.store')->where('key', '.*');
+    Route::delete('pins/{key}', [PinnedItemController::class, 'destroy'])->name('pins.destroy')->where('key', '.*');
+
     // Academic calendar — readable by every role, admin-authored.
     Route::get('calendar', [CalendarEventController::class, 'index'])->name('calendar.index');
     Route::middleware('role:admin')->group(function () {
@@ -78,6 +84,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('students/import', [StudentCsvController::class, 'importStore'])->name('students.import.store');
         Route::get('school-settings', [SchoolSettingsController::class, 'edit'])->name('school-settings.edit');
         Route::put('school-settings', [SchoolSettingsController::class, 'update'])->name('school-settings.update');
+        Route::get('streams', [StreamController::class, 'index'])->name('streams.index');
+        Route::post('streams', [StreamController::class, 'store'])->name('streams.store');
+        Route::delete('streams/{stream}', [StreamController::class, 'destroy'])->name('streams.destroy');
     });
 
     // Student photo — admin (any student, own school) or a parent (their own children only);

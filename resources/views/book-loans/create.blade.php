@@ -13,7 +13,7 @@
                         @csrf
 
                         <x-form.select name="inventory_item_id" label="Book"
-                            :options="$books->mapWithKeys(fn ($b) => [$b->id => \"{$b->name} ({$b->quantity} available)\"])" />
+                            :options="$books->mapWithKeys(fn ($b) => [$b->id => trim(\"{$b->name}\".($b->author ? \" — {$b->author}\" : '').\" ({$b->quantity} available)\")])" />
 
                         <x-form.select name="student_id" label="Student"
                             :options="$students->mapWithKeys(fn ($s) => [$s->id => $s->full_name])" />

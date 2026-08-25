@@ -2,6 +2,28 @@
 
 Running log of what's been built, in plain language. Newest first.
 
+## 2026-08-25 (7)
+
+- **Role-access audit**: HR could browse the student directory, every gate pass, and every
+  incident report (including anonymous bullying/violence reports) school-wide — none of that is
+  HR's job. Tightened `StudentController`, `GatePassController`, `IncidentReportController`,
+  `BookLoanController` so browsing "everyone's records" is scoped to the roles that actually have
+  a reason to (admin/teacher/nurse/librarian, depending on the module); HR now only ever sees
+  incidents it personally filed.
+- **Dark mode** — a real toggle in the nav, no flash of the wrong theme on load. Implemented as a
+  `.dark`-scoped CSS layer that re-targets the app's existing Tailwind utility classes rather than
+  hand-editing ~80 views with `dark:` variants.
+- **Streams** — admin-managed identification labels ("Blue", "Green") a student or teacher can be
+  attached to, separate from their actual class.
+- **School logo on every generated document** — uploaded once in School Settings, appears on
+  report cards, payslips, and receipts, which now share one standardized header/style partial
+  instead of three near-identical layouts.
+- **Library catalogue** — author, ISBN, publisher, edition year, and shelf location for books.
+- **Dashboard pins** — the Academic Calendar previews on every dashboard by default (dismissible),
+  and Academic/Health Trends, Payroll, Invoices, Library Loans, and Inventory can each be pinned
+  as a personal shortcut.
+- 192/192 passing.
+
 ## 2026-08-25 (6)
 
 - **Fixed the nav drawer not actually opening.** `backdrop-blur-md` on the sticky top bar made it

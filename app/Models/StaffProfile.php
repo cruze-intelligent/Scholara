@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Storage;
 
 class StaffProfile extends Model
 {
-    protected $fillable = ['user_id', 'trn', 'role_title', 'photo_path', 'hire_date', 'monthly_gross_salary'];
+    protected $fillable = ['user_id', 'stream_id', 'trn', 'role_title', 'photo_path', 'hire_date', 'monthly_gross_salary'];
 
     protected $casts = [
         'hire_date' => 'date',
@@ -19,6 +19,11 @@ class StaffProfile extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function stream(): BelongsTo
+    {
+        return $this->belongsTo(Stream::class);
     }
 
     public function payslips(): HasMany

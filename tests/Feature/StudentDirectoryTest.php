@@ -145,6 +145,19 @@ class StudentDirectoryTest extends TestCase
         $this->actingAs($parentUser)->get(route('students.show', $strangerChild))->assertForbidden();
     }
 
+    public function test_hr_has_no_student_directory_access(): void
+    {
+        Role::findOrCreate('hr');
+
+        $school = School::factory()->create();
+        $hr = User::factory()->create(['school_id' => $school->id]);
+        $hr->assignRole('hr');
+        $student = Student::factory()->for($school)->create();
+
+        $this->actingAs($hr)->get(route('students.index'))->assertForbidden();
+        $this->actingAs($hr)->get(route('students.show', $student))->assertForbidden();
+    }
+
     public function test_non_staff_non_guardian_cannot_browse_the_directory(): void
     {
         Role::findOrCreate('learner');

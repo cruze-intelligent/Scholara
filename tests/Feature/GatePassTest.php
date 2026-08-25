@@ -84,6 +84,23 @@ class GatePassTest extends TestCase
         $this->actingAs($admin)->patch(route('gate-passes.depart', $gatePass))->assertStatus(422);
     }
 
+    public function test_hr_cannot_browse_or_create_gate_passes(): void
+    {
+        Role::findOrCreate('hr');
+
+        $school = School::factory()->create();
+        $hr = User::factory()->create(['school_id' => $school->id]);
+        $hr->assignRole('hr');
+        $student = Student::factory()->for($school)->create();
+
+        $this->actingAs($hr)->get(route('gate-passes.index'))->assertForbidden();
+        $this->actingAs($hr)->get(route('gate-passes.create'))->assertForbidden();
+        $this->actingAs($hr)->post(route('gate-passes.store'), [
+            'student_id' => $student->id,
+            'reason' => 'X',
+        ])->assertForbidden();
+    }
+
     public function test_parent_only_sees_their_own_childs_gate_passes(): void
     {
         Role::findOrCreate('parent');

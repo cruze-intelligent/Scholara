@@ -31,6 +31,25 @@ class InventoryItemTest extends TestCase
         $this->assertDatabaseHas('inventory_items', ['name' => 'Novels', 'quantity' => 20]);
     }
 
+    public function test_librarian_can_record_catalogue_details_for_a_book(): void
+    {
+        Role::findOrCreate('librarian');
+        $school = School::factory()->create();
+        $librarian = User::factory()->create(['school_id' => $school->id]);
+        $librarian->assignRole('librarian');
+
+        $this->actingAs($librarian)->post(route('inventory-items.store'), [
+            'category' => 'library', 'name' => 'Things Fall Apart', 'quantity' => 5, 'unit' => 'pieces',
+            'author' => 'Chinua Achebe', 'isbn' => '978-0385474542', 'publisher' => 'Anchor',
+            'edition_year' => 1994, 'shelf_location' => 'Fiction A3',
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('inventory_items', [
+            'name' => 'Things Fall Apart', 'author' => 'Chinua Achebe', 'isbn' => '978-0385474542',
+            'shelf_location' => 'Fiction A3',
+        ]);
+    }
+
     public function test_librarian_can_edit_an_item(): void
     {
         Role::findOrCreate('librarian');
