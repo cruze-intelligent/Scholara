@@ -2,13 +2,17 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToSchool;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class GatePass extends Model
 {
+    use BelongsToSchool;
+
     protected $fillable = [
-        'student_id', 'requested_by', 'reason', 'approved_by', 'departed_at', 'returned_at',
+        'school_id', 'student_id', 'requested_by', 'reason', 'status', 'approved_by',
+        'departed_at', 'returned_at',
     ];
 
     protected $casts = [

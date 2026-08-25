@@ -7,6 +7,8 @@ use App\Http\Controllers\ClinicVisitController;
 use App\Http\Controllers\DailyActivityLogController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DGatewayWebhookController;
+use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\GatePassController;
 use App\Http\Controllers\HealthRecordController;
 use App\Http\Controllers\IncidentReportController;
 use App\Http\Controllers\InventoryItemController;
@@ -21,7 +23,9 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PayrollRunController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ResourceController;
 use App\Http\Controllers\SchoolSettingsController;
+use App\Http\Controllers\StudentCsvController;
 use App\Http\Controllers\StudentPhotoController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WowMomentController;
@@ -54,6 +58,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('role:admin')->group(function () {
         Route::resource('users', UserController::class)->only(['index', 'create', 'store', 'edit', 'update']);
         Route::patch('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggle-active');
+        Route::get('students/export', [StudentCsvController::class, 'export'])->name('students.export');
+        Route::get('students/import', [StudentCsvController::class, 'importCreate'])->name('students.import');
+        Route::post('students/import', [StudentCsvController::class, 'importStore'])->name('students.import.store');
         Route::get('school-settings', [SchoolSettingsController::class, 'edit'])->name('school-settings.edit');
         Route::put('school-settings', [SchoolSettingsController::class, 'update'])->name('school-settings.update');
     });
@@ -103,6 +110,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('my/notices', [LearnerController::class, 'notices'])->name('learner.notices');
     });
 
+    // Teaching resources — any authenticated role can view/download (scoped inside the
+    // controller to the classes they teach/their own children/their own class); only
+    // teacher/admin can upload or delete.
+    Route::get('resources', [ResourceController::class, 'index'])->name('resources.index');
+    Route::get('resources/{resource}/download', [ResourceController::class, 'download'])->name('resources.download');
+    Route::middleware('role:teacher|admin')->group(function () {
+        Route::get('resources/create', [ResourceController::class, 'create'])->name('resources.create');
+        Route::post('resources', [ResourceController::class, 'store'])->name('resources.store');
+        Route::delete('resources/{resource}', [ResourceController::class, 'destroy'])->name('resources.destroy');
+    });
+
     // Noticeboard — admin/teacher author, everyone reads via the dashboard.
     Route::middleware('role:admin|teacher')->group(function () {
         Route::resource('notices', NoticeController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
@@ -131,7 +149,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('clinic-visits', ClinicVisitController::class)->only(['index', 'create', 'store', 'edit', 'update']);
 
         Route::get('reports/health', [ReportController::class, 'health'])->name('reports.health');
+
+        Route::post('students/{student}/documents', [DocumentController::class, 'studentStore'])->name('students.documents.store');
     });
+
+    // Medical dosage/prescription attachments on a student's record — read access also extends
+    // to the child's own parent (checked inside the controller), so index isn't nurse/admin-only.
+    Route::get('students/{student}/documents', [DocumentController::class, 'studentIndex'])->name('students.documents.index');
+
+    // Staff document repository (contracts, certificates) — hr/admin manage; a staff member can
+    // view their own file (checked inside the controller).
+    Route::get('users/{user}/documents', [DocumentController::class, 'staffIndex'])->name('users.documents.index');
+    Route::middleware('role:hr|admin')->group(function () {
+        Route::post('users/{user}/documents', [DocumentController::class, 'staffStore'])->name('users.documents.store');
+    });
+
+    Route::get('documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
+    Route::delete('documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
     Route::middleware('role:admin')->group(function () {
         Route::delete('medications/{medication}', [MedicationAdministrationController::class, 'destroy'])->name('medications.destroy');
         Route::delete('clinic-visits/{clinic_visit}', [ClinicVisitController::class, 'destroy'])->name('clinic-visits.destroy');
@@ -152,6 +186,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('inventory-items.transactions.store');
         Route::delete('inventory-items/{inventoryItem}/transactions/{transaction}', [InventoryTransactionController::class, 'void'])
             ->name('inventory-items.transactions.void');
+    });
+
+    // Gate passes — anyone can request/view their own scope (checked in the controller);
+    // approve/depart/return restricted to admin/teacher.
+    Route::get('gate-passes', [GatePassController::class, 'index'])->name('gate-passes.index');
+    Route::get('gate-passes/create', [GatePassController::class, 'create'])->name('gate-passes.create');
+    Route::post('gate-passes', [GatePassController::class, 'store'])->name('gate-passes.store');
+    Route::middleware('role:admin|teacher')->group(function () {
+        Route::patch('gate-passes/{gatePass}/approve', [GatePassController::class, 'approve'])->name('gate-passes.approve');
+        Route::patch('gate-passes/{gatePass}/depart', [GatePassController::class, 'depart'])->name('gate-passes.depart');
+        Route::patch('gate-passes/{gatePass}/return', [GatePassController::class, 'returned'])->name('gate-passes.return');
     });
 
     // Nursery

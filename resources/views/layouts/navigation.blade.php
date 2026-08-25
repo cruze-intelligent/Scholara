@@ -123,6 +123,7 @@
                 <x-responsive-nav-link :href="route('attendance.create')" :active="request()->routeIs('attendance.*')">{{ __('Attendance') }}</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('notices.index')" :active="request()->routeIs('notices.*')">{{ __('Noticeboard') }}</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('reports.academics')" :active="request()->routeIs('reports.academics')">{{ __('Academic Trends') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('resources.index')" :active="request()->routeIs('resources.*')">{{ __('Teaching Resources') }}</x-responsive-nav-link>
             @endhasanyrole
 
             @hasrole('learner')
@@ -130,6 +131,12 @@
                 <x-responsive-nav-link :href="route('learner.assessments')" :active="request()->routeIs('learner.assessments')">{{ __('My Assessments') }}</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('learner.attendance')" :active="request()->routeIs('learner.attendance')">{{ __('My Attendance') }}</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('learner.notices')" :active="request()->routeIs('learner.notices')">{{ __('Noticeboard') }}</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('resources.index')" :active="request()->routeIs('resources.*')">{{ __('Teaching Resources') }}</x-responsive-nav-link>
+            @endhasrole
+
+            @hasrole('parent')
+                <p class="pt-3 pb-1 px-3 text-xs font-semibold uppercase tracking-wide text-gray-400">{{ __('My Children') }}</p>
+                <x-responsive-nav-link :href="route('resources.index')" :active="request()->routeIs('resources.*')">{{ __('Teaching Resources') }}</x-responsive-nav-link>
             @endhasrole
 
             @hasanyrole(['nurse', 'admin'])
@@ -141,6 +148,7 @@
 
             <p class="pt-3 pb-1 px-3 text-xs font-semibold uppercase tracking-wide text-gray-400">{{ __('Operations') }}</p>
             <x-responsive-nav-link :href="route('incidents.index')" :active="request()->routeIs('incidents.*')">{{ __('Issue Reports') }}</x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('gate-passes.index')" :active="request()->routeIs('gate-passes.*')">{{ __('Gate Passes') }}</x-responsive-nav-link>
             @hasanyrole(['bursar', 'admin'])
                 <x-responsive-nav-link :href="route('invoices.index')" :active="request()->routeIs('invoices.*')">{{ __('Invoices') }}</x-responsive-nav-link>
             @endhasanyrole

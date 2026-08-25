@@ -27,6 +27,12 @@
                     <x-primary-button>{{ __('Save') }}</x-primary-button>
                 </form>
             </x-card>
+
+            <div class="mt-4 text-right">
+                <a href="{{ route('students.documents.index', $student) }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                    Medical documents (dosage sheets, prescriptions) &rarr;
+                </a>
+            </div>
         </div>
     </div>
 </x-app-layout>

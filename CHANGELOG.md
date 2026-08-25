@@ -2,6 +2,30 @@
 
 Running log of what's been built, in plain language. Newest first.
 
+## 2026-08-25
+
+- Ran a global-parity audit against real-world school-management platforms (PowerSchool, Fedena,
+  openSIS) per explicit feedback that the system "doesn't compare to global systems yet" —
+  written up in `docs/GLOBAL_PARITY_AUDIT.md` with a per-role gap list rather than leaving it as
+  a feeling. One correction along the way: a learner already had full result-history access
+  (`/my/assessments`), contrary to the "same as the parent" framing — the actual asymmetry runs
+  the other way (parent dashboard is summary-only, learner has full history).
+- Built the highest-leverage gap from that audit: document management, which didn't exist as a
+  general concept before this (only three hardcoded upload paths: student photo, staff photo,
+  WOW-moment photo). Landed as three pieces: teaching-resource uploads (`ResourceController`,
+  built on a pre-existing but never-wired `Resource` model — teacher uploads scoped to their
+  actual teaching assignment, readable by the students/parents of that class), medical/staff
+  document attachments (`DocumentController`, one new polymorphic `Document` model instead of a
+  bespoke path per attachment target — a nurse can now attach a dosage sheet to a student's
+  health record, hr can attach a staff contract, each readable by the person it's about), and
+  bulk student-list CSV import/export (`StudentCsvController`) so an admin doesn't have to add
+  students one at a time via the user-management screen.
+- Finished Phase 4 (gate passes) — was migration + model only before this, now a full
+  request→approve/reject→depart→return workflow (`GatePassController`), scoped so a guardian
+  only sees their own children's passes, with a notification to the requester on the decision.
+- 11 new tests across `ResourceTest`, `DocumentTest`, `StudentCsvTest`, `GatePassTest`. 144/144
+  passing.
+
 ## 2026-08-24 (2)
 
 - Brought every module up to full CRUD depth (Phase 3) — before this, everything except

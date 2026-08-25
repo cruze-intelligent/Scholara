@@ -5,6 +5,9 @@ give every role real authority in their own area, add user management, bring eve
 CRUD depth, add notifications + dark theme, and run tests throughout rather than at the end. Ticked
 off as work lands; see [CHANGELOG.md](../CHANGELOG.md) for the detailed log of what changed and
 when. Findings below are from a three-agent audit on 2026-08-23 (RBAC, module CRUD, theming/notifs).
+See also [docs/GLOBAL_PARITY_AUDIT.md](./GLOBAL_PARITY_AUDIT.md) (2026-08-25) for a per-role gap
+list against real-world SIS platforms — the next phases beyond Phase 4 below will likely be drawn
+from that list.
 
 ## Phase 0 — Security & scoping fixes — done 2026-08-23
 
@@ -270,16 +273,50 @@ Per the audit: every module tops out at `index`/`create`/`store` (routes explici
   from the request (nullable validation doesn't add missing keys) — fixed with `! empty(...)`
   guards before the `explode()`.
 
-## Phase 4 — Gate passes (build from scratch)
+## Phase 4 — Gate passes (build from scratch) — done 2026-08-25
 
-Confirmed: migration + model only. No controller, routes, views, factory, or tests exist at all —
-below the docs' own bar for "scaffolded."
+Was migration + model only, no controller/routes/views/tests. `GatePass` had no `school_id` —
+added via migration + `BelongsToSchool`, same pattern as every other previously-unscoped model.
 
-- [ ] `GatePassController` — request (learner/parent-initiated or teacher-initiated), approve
-      (admin/teacher), log departure/return
-- [ ] Routes, views (`resources/views/gate-passes/*`), factory
-- [ ] Role scoping mirroring the incident-report pattern (guardian sees own student's passes only)
-- [ ] Feature tests
+- [x] `GatePassController` — request (parent/learner for their own child/self, teacher/admin for
+      any student), approve/reject (admin/teacher), then log departure/return as separate steps
+      (`depart` requires `approved` status, `return` requires `departed_at` already set) — a new
+      `status` enum column (pending/approved/rejected) added since the original migration had no
+      way to represent a decision, only a reason and two nullable timestamps.
+- [x] Routes, views (`resources/views/gate-passes/*`), nav link under Operations
+- [x] Role scoping mirrors `IncidentReportController`: a guardian sees only their own children's
+      passes, a learner only their own; admin/teacher see everything at the school
+- [x] `GatePassStatusUpdated` notification (mail + database) to the requester on approve/reject
+- [x] Feature tests (`GatePassTest`): full request→approve→depart→return happy path, cross-child
+      403, can't-depart-before-approval, parent scoping on index. All passing.
+
+## Phase 9 — Global-parity gaps (from the 2026-08-25 audit)
+
+See [docs/GLOBAL_PARITY_AUDIT.md](./GLOBAL_PARITY_AUDIT.md) for the full comparison against
+real-world SIS platforms. Landed so far:
+
+- [x] **Teaching resources** (`ResourceController`) — teacher uploads scoped to a
+      `teacher_subject_assignments` entry (admin can upload for any class); read access extends
+      to parents/learners of that class, so materials are actually reachable by the students
+      they're for. Built on the pre-existing but never-wired `Resource` model/migration — added
+      `school_id` (`BelongsToSchool`) plus `original_filename`/`mime_type`/`size` so downloads
+      keep the real filename instead of a storage hash. `ResourceTest`, 4 cases.
+- [x] **Generic document attachments** (`DocumentController`, new `Document` model, polymorphic
+      `documentable`) — closes two explicitly-named gaps with one model: a student's medical
+      dosage sheet/prescription (category `medical`, nurse/admin upload, viewable by the child's
+      own parent) and a staff document (category `staff`, hr/admin upload, viewable by the staff
+      member themselves). Linked from `health-records/edit` and `users/edit`. `DocumentTest`, 4
+      cases.
+- [x] **Student list bulk import/export** (`StudentCsvController`) — admin exports the current
+      roster to CSV, or imports a batch of new students from one; deliberately students-only, no
+      guardian columns, since an unlinked `Student` is already a valid state in this app (the
+      existing `UserController` "unlinkedStudents" flow) — an admin links a guardian afterwards
+      exactly the way they would for a manually-added student. Row-level validation errors are
+      collected and shown rather than failing the whole import. `StudentCsvTest`, 3 cases.
+- [ ] **Not yet built from the audit list**: PDF generation (report cards, transcripts, payslips,
+      receipts) — in progress; timetable/scheduling; library circulation (vs. generic inventory);
+      leave management; fee structures; admin dashboard KPI rollup; parent full-history views to
+      match what learner already has.
 
 ## Phase 5 — Notifications — done, see above
 

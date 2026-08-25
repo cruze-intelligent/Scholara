@@ -9,6 +9,14 @@
                 <p class="text-sm font-medium text-green-600">{{ session('status') }}</p>
             @endif
 
+            @if (session('importErrors'))
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700 space-y-1">
+                    @foreach (session('importErrors') as $error)
+                        <p>{{ $error }}</p>
+                    @endforeach
+                </div>
+            @endif
+
             @if (session('generatedPassword'))
                 <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm">
                     <p class="font-medium text-yellow-800">
@@ -22,7 +30,13 @@
                 </div>
             @endif
 
-            <div class="flex justify-end">
+            <div class="flex justify-end items-center gap-4">
+                <a href="{{ route('students.export') }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                    Export student list (CSV)
+                </a>
+                <a href="{{ route('students.import') }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                    Import students (CSV)
+                </a>
                 <a href="{{ route('users.create') }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
                     + Add user
                 </a>

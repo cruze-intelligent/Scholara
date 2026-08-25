@@ -88,6 +88,14 @@
                     <x-primary-button type="submit">{{ __('Save changes') }}</x-primary-button>
                 </form>
             </x-card>
+
+            @if ($targetUser->staffProfile)
+                <div class="text-right">
+                    <a href="{{ route('users.documents.index', $targetUser) }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                        Documents (contracts, certificates) &rarr;
+                    </a>
+                </div>
+            @endif
         </div>
     </div>
 </x-app-layout>
