@@ -11,6 +11,7 @@ use App\Http\Controllers\DailyActivityLogController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DGatewayWebhookController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\FaqController;
 use App\Http\Controllers\GatePassController;
 use App\Http\Controllers\HealthRecordController;
 use App\Http\Controllers\IncidentReportController;
@@ -44,6 +45,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+// Public — reachable from the login/register pages as well as the main nav once logged in.
+Route::get('/faq', [FaqController::class, 'index'])->name('faq');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified', 'school.approved'])

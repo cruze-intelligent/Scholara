@@ -130,6 +130,9 @@
             <x-responsive-nav-link :href="route('calendar.index')" :active="request()->routeIs('calendar.*')" icon="calendar">
                 {{ __('Academic Calendar') }}
             </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('faq')" :active="request()->routeIs('faq')" icon="help">
+                {{ __('Help & FAQs') }}
+            </x-responsive-nav-link>
             @endunlessrole
 
             {{-- HR manages staff, not students — deliberately excluded here. --}}
@@ -214,6 +217,10 @@
                         {{ __('Log Out') }}
                     </button>
                 </form>
+
+                <div class="flex justify-center pt-1">
+                    <x-support-links />
+                </div>
             </div>
         </div>
     </div>

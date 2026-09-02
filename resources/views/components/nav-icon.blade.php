@@ -85,6 +85,18 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 3.5c-2.5 0-4.5 2-4.5 4.5 0 3 4.5 8.5 4.5 8.5s4.5-5.5 4.5-8.5c0-2.5-2-4.5-4.5-4.5Z" />
             <circle cx="12" cy="8" r="1.6" stroke-linecap="round" stroke-linejoin="round" />
             @break
+        @case('mail')
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.5 6.5h17v11h-17v-11Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 7l8 6.5L20 7" />
+            @break
+        @case('whatsapp')
+            <path fill="currentColor" stroke="none" d="M12 3.5a8.4 8.4 0 0 0-7.2 12.7L3.5 20.5l4.4-1.2A8.4 8.4 0 1 0 12 3.5Zm0 1.7a6.7 6.7 0 0 1 5.7 10.2 6.7 6.7 0 0 1-9.9 2.1l-.3-.2-2.5.7.7-2.4-.2-.3A6.7 6.7 0 0 1 12 5.2Zm-3 3.1c-.2 0-.4.1-.6.3-.2.2-.7.7-.7 1.7s.7 2 .8 2.1c.1.1 1.4 2.2 3.4 3 1.7.7 2 .6 2.4.6.4 0 1.2-.5 1.4-1 .2-.4.2-.8.1-1l-.5-.2c-.3-.1-1.6-.8-1.8-.9-.2-.1-.4-.1-.6.1l-.5.7c-.1.1-.2.2-.4.1-.2-.1-.9-.3-1.7-1.1-.6-.6-1-1.3-1.2-1.5-.1-.2 0-.4.1-.5l.3-.4.2-.3c.1-.1 0-.3 0-.4l-.7-1.6c-.2-.4-.4-.4-.6-.4h-.4Z" />
+            @break
+        @case('help')
+            <circle cx="12" cy="12" r="8.5" stroke-linecap="round" stroke-linejoin="round" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.5 9.3a2.5 2.5 0 1 1 3.6 2.3c-.7.4-1.1.8-1.1 1.7v.4" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.8v.05" />
+            @break
         @default
             <circle cx="12" cy="12" r="3" />
     @endswitch

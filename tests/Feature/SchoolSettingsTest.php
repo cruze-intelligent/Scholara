@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\School;
+use App\Models\SchoolSubscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
@@ -35,6 +36,29 @@ class SchoolSettingsTest extends TestCase
 
         $this->assertTrue($school->offersLevel('nursery'));
         $this->assertTrue($school->offersLevel('upper_secondary'));
+    }
+
+    public function test_admin_can_see_their_own_subscription_status_and_billing_history(): void
+    {
+        Role::findOrCreate('admin');
+        $school = School::factory()->create(['status' => 'trial', 'trial_ends_at' => now()->addDays(10)]);
+        $admin = User::factory()->create(['school_id' => $school->id]);
+        $admin->assignRole('admin');
+        SchoolSubscription::create([
+            'school_id' => $school->id,
+            'period_start' => now()->subDays(90),
+            'period_end' => now()->subDay(),
+            'student_count' => 10,
+            'rate_per_student' => SchoolSubscription::RATE_PER_STUDENT_UGX,
+            'amount' => 30000,
+            'status' => 'paid',
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('school-settings.edit'));
+
+        $response->assertOk();
+        $response->assertViewHas('subscriptions', fn ($subs) => $subs->count() === 1);
+        $response->assertSee('30,000');
     }
 
     public function test_non_admin_cannot_change_school_settings(): void

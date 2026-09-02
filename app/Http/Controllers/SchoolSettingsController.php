@@ -19,9 +19,12 @@ class SchoolSettingsController extends Controller
 
     public function edit(Request $request): View
     {
+        $school = $request->user()->school;
+
         return view('school-settings.edit', [
-            'school' => $request->user()->school,
+            'school' => $school,
             'availableLevels' => self::LEVELS,
+            'subscriptions' => $school->subscriptions()->latest('period_end')->get(),
         ]);
     }
 
